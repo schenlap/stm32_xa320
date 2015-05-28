@@ -14,6 +14,10 @@ void gpio_toggle_led(uint32_t pin) {
 	gpio_toggle(LED3_PORT, pin);
 }
 
+int gpio_get_switch() {
+		gpio_get(SWITCHB1_PORT, SWITCHB1_PIN);
+}
+
 void gpio_setup(void)
 {
 

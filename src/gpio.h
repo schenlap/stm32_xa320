@@ -15,15 +15,18 @@
 #define LED6_PORT GPIOD
 
 #define LED3 LED3_PIN
-#define LED4 LED3_PIN
-#define LED5 LED3_PIN
-#define LED6 LED3_PIN
+#define LED4 LED4_PIN
+#define LED5 LED5_PIN
+#define LED6 LED6_PIN
 
 #define SWITCHB1_PIN GPIO0
-#define SWITCH_PORT GPIOA
+#define SWITCHB1_PORT GPIOA
+#define SWITCHB1 SWITCHB1_PIN
 
 void gpio_setup(void);
 void gpio_set_led(uint32_t pin, uint32_t state);
 void gpio_toggle_led(uint32_t pin);
+
+int gpio_get_switch(void);
 
 #endif // GPIO_H

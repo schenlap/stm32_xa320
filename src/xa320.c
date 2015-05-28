@@ -21,31 +21,6 @@ void systick_setup(void)
 	systick_interrupt_enable();
 }
 
-int main(void)
-{
-	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
-
-	rcc_periph_clock_enable(RCC_GPIOA);
-	rcc_periph_clock_enable(RCC_GPIOG);
-	rcc_periph_clock_enable(RCC_OTGFS);
-
-	//systick_setup();
-
-	gpio_setup();
-
-	usb_setup();
-
-	gpio_set_led(LED3, 1);
-
-	int cnt = 0;
-	while (1) {
-		if (cnt++ > 100000) {
-				cnt = 0;
-				sys_tick_handler();
-		}
-	}
-}
-
 void sys_tick_handler(void)
 {
 	system_millis++;
@@ -58,7 +33,35 @@ void sys_tick_handler(void)
 	if (cnt > 100) {
 		//gpio_toggle_led(LED4);
 		cnt = 0;
+		usb_send_packet(buf, 4);
 	}
-	usb_send_packet(buf, 4);
+}
+
+int main(void)
+{
+	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
+
+	rcc_periph_clock_enable(RCC_GPIOA);
+	rcc_periph_clock_enable(RCC_GPIOG);
+	rcc_periph_clock_enable(RCC_OTGFS);
+
+	systick_setup();
+
+	gpio_setup();
+
+	usb_setup();
+
+	gpio_set_led(LED5, 1);
+
+	long long cnt = 0;
+	while (1) {
+		if (cnt++ > 1680000) {
+				cnt = 0;
+				gpio_toggle_led(LED6);
+				//sys_tick_handler();
+		}
+		gpio_set_led(LED5, gpio_get_switch());
+	}
+
 }
 
