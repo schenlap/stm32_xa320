@@ -18,6 +18,10 @@ void systime_setup(void)
 	systick_interrupt_enable();
 }
 
+uint32_t systime_get(void) {
+		return system_millis;
+}
+
 void sys_tick_handler(void)
 {
 	system_millis++;

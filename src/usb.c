@@ -83,6 +83,6 @@ void
 otg_fs_isr(void)
 {
 	usbd_poll(my_usb_device);
-	//gpio_toggle_led(LED4);
+	gpio_toggle_led(LED4);
 	//last_usb_request_time=system_millis;
 }

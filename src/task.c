@@ -56,7 +56,7 @@ void task_time_increment(void) {
 	long up;
 	
 	lock_irq();
-	up = systimems_get();
+	up = systime_get();
 	unlock_irq();
 	
 	// wait for next ms tick

@@ -10,18 +10,31 @@
 #include "usb.h"
 
 void send_testdata(void);
+void task_usb(void);
 
 void send_testdata(void)
 {
 	uint8_t buf[4] = {0, 0, 0, 0};
-	static uint32_t cnt = 0;
 
 	buf[1] = 'S';
-	buf[2] = 't'; //cnt++;
-	if (cnt++ > 100000) {
-		cnt = 0;
-		usb_send_packet(buf, 4);
+	buf[2] = 't';
+	usb_send_packet(buf, 4);
+}
+
+void task_usb(void) {
+	static uint8_t cnt = 0;
+
+	if (usb_ready) {
+		send_testdata();
+		gpio_set_led(LED6, 1);
+	} else {
+		if (cnt++ > 5) {
+			gpio_toggle_led(LED6);
+			cnt = 0;
+		}
 	}
+
+	gpio_set_led(LED5, gpio_get_switch());
 }
 
 int main(void)
@@ -40,21 +53,12 @@ int main(void)
 
 	gpio_set_led(LED5, 1);
 
-	long long cnt = 0;
+	task_create(task_usb, 100);
 
 	while (1) {
-		gpio_set_led(LED5, gpio_get_switch());
-		if (usb_ready) {
-			send_testdata();
-			gpio_set_led(LED6, 1);
-			continue;
-		}
-
-		if (cnt++ > 1680000) {
-				cnt = 0;
-				gpio_toggle_led(LED6);
-		}
+			// Simple Taskswitcher
+			task_start();
+			task_time_increment();
 	}
-
 }
 
