@@ -1,7 +1,7 @@
+#include "systime.h"
 #include "gpio.h"
 #include "usb.h"
 #include "usb_descriptors.h"
-//#include "systick.h"
 
 /* Buffer to be used for control requests. */
 uint8_t usbd_control_buffer[128];
@@ -73,7 +73,12 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 usbd_device *my_usb_device;
 
 void usb_send_packet(const void *buf, int len){
-    while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0);
+	uint32_t timeout = systime_get() + 5; // wait max 5 milli sec
+
+    while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
+			if (systime_get() > timeout)
+					break;
+	}
 }
 
 void usb_setup(void)
@@ -92,14 +97,9 @@ void usb_setup(void)
 	nvic_enable_irq(NVIC_OTG_FS_IRQ);
 }
 
-void usb_poll(void) {
-	//usbd_poll(my_usb_device);
-}
-
 void
 otg_fs_isr(void)
 {
 	usbd_poll(my_usb_device);
 	gpio_toggle_led(LED4);
-	//last_usb_request_time=system_millis;
 }
