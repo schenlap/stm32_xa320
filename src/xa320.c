@@ -4,34 +4,20 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/systick.h>
 
+#include "systime.h"
 #include "gpio.h"
 #include "usb.h"
 
-void systick_setup(void);
+void send_testdata(void);
 
-uint32_t system_millis;
-
-void systick_setup(void)
+void send_testdata(void)
 {
-	/* clock rate / 1000 to get 1mS interrupt rate */
-	systick_set_reload(168000);
-	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
-	systick_counter_enable();
-	/* this done last */
-	systick_interrupt_enable();
-}
-
-void sys_tick_handler(void)
-{
-	system_millis++;
-
 	uint8_t buf[4] = {0, 0, 0, 0};
 	static uint32_t cnt = 0;
 
 	buf[1] = 'S';
 	buf[2] = 't'; //cnt++;
-	if (cnt > 100) {
-		//gpio_toggle_led(LED4);
+	if (cnt++ > 100) {
 		cnt = 0;
 		usb_send_packet(buf, 4);
 	}
@@ -45,7 +31,7 @@ int main(void)
 	rcc_periph_clock_enable(RCC_GPIOG);
 	rcc_periph_clock_enable(RCC_OTGFS);
 
-	systick_setup();
+	systime_setup();
 
 	gpio_setup();
 
@@ -58,8 +44,9 @@ int main(void)
 		if (cnt++ > 1680000) {
 				cnt = 0;
 				gpio_toggle_led(LED6);
-				//sys_tick_handler();
+		//		send_testdata();
 		}
+		send_testdata();
 		gpio_set_led(LED5, gpio_get_switch());
 	}
 
