@@ -4,6 +4,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/systick.h>
 
+#include "task.h"
 #include "systime.h"
 #include "gpio.h"
 #include "usb.h"
@@ -42,15 +43,17 @@ int main(void)
 	long long cnt = 0;
 
 	while (1) {
+		gpio_set_led(LED5, gpio_get_switch());
+		if (usb_ready) {
+			send_testdata();
+			gpio_set_led(LED6, 1);
+			continue;
+		}
+
 		if (cnt++ > 1680000) {
 				cnt = 0;
 				gpio_toggle_led(LED6);
 		}
-		if (usb_ready) {
-			send_testdata();
-			gpio_set_led(LED4, 1);
-		}
-		gpio_set_led(LED5, gpio_get_switch());
 	}
 
 }
