@@ -9,16 +9,16 @@ typedef struct {
 	void (*task)(void);
 } task_t;
 
-void task_init();
+void task_init(void);
 
 int task_create(void (*task)(void), int cyctime_ms);
 
-void task_start();
+void task_start(void);
 
-void task_time_increment();
+void task_time_increment(void);
 
-void lock_irq();
+void lock_irq(void);
 
-void unlock_irq();
+void unlock_irq(void);
 
 #endif

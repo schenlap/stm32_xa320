@@ -8,7 +8,7 @@ uint32_t uptime_ms;
 int task_lock_irq_counter = 0;
 
 
-void task_init() {
+void task_init(void) {
 	int i;
 	
 	for (i = 0; i < TASKS_MAX; i++) {
@@ -34,7 +34,7 @@ int task_create(void (*task)(void), int cyctime_ms) {
 }
 
 
-void task_start() {
+void task_start(void) {
 	int i;
 	
 	for (i = 0; i < TASKS_MAX; i++) {
@@ -49,10 +49,10 @@ void task_start() {
 }
 
 
-void task_time_increment() {
+void task_time_increment(void) {
 	static long last_tick = 0;
 	int i;
-	int delay;
+	//int delay;
 	long up;
 	
 	lock_irq();
@@ -62,7 +62,7 @@ void task_time_increment() {
 	// wait for next ms tick
 	if (up != last_tick) {
 		lock_irq();
-			delay = up - last_tick;
+			//delay = up - last_tick;
 			last_tick = up;
 		unlock_irq();
 		
@@ -78,14 +78,14 @@ void task_time_increment() {
 }
 
 
-void lock_irq() {
+void lock_irq(void) {
 	if (!task_lock_irq_counter)
 		asm volatile ("cpsid i");
 	task_lock_irq_counter++;
 }
 
 
-void unlock_irq() {
+void unlock_irq(void) {
 	task_lock_irq_counter--;
 	if (!task_lock_irq_counter)
 		asm volatile ("cpsie i");
