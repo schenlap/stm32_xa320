@@ -15,9 +15,9 @@ void task_usb(void);
 void send_testdata(void)
 {
 	uint8_t buf[4] = {0, 0, 0, 0};
-
-	buf[1] = 'S';
-	buf[2] = 't';
+	buf[0] = 'S';
+	buf[1] = 't';
+	buf[2] = 'e';
 	usb_send_packet(buf, 4);
 }
 
@@ -59,6 +59,7 @@ int main(void)
 			// Simple Taskswitcher
 			task_start();
 			task_time_increment();
+			usb_poll();
 	}
 }
 

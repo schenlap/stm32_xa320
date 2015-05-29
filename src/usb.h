@@ -12,6 +12,7 @@
 void usb_setup(void);
 void send_test(void);
 void usb_send_packet(const void *buf, int len);
+void usb_poll(void);
 
 extern volatile uint32_t last_usb_request_time;
 extern uint8_t usb_ready;
