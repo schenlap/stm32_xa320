@@ -58,7 +58,7 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 usbd_device *my_usb_device;
 
 void usb_send_packet(const void *buf, int len){
-    gpio_toggle_led(LED5);
+    //gpio_toggle_led(LED5);
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0);
     //gpio_clear(LED5, 0);
 }
@@ -83,5 +83,6 @@ void
 otg_fs_isr(void)
 {
 	usbd_poll(my_usb_device);
+	//gpio_toggle_led(LED4);
 	//last_usb_request_time=system_millis;
 }

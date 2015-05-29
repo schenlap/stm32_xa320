@@ -17,7 +17,7 @@ void send_testdata(void)
 
 	buf[1] = 'S';
 	buf[2] = 't'; //cnt++;
-	if (cnt++ > 100) {
+	if (cnt++ > 100000) {
 		cnt = 0;
 		usb_send_packet(buf, 4);
 	}
@@ -40,13 +40,16 @@ int main(void)
 	gpio_set_led(LED5, 1);
 
 	long long cnt = 0;
+
 	while (1) {
 		if (cnt++ > 1680000) {
 				cnt = 0;
 				gpio_toggle_led(LED6);
-		//		send_testdata();
 		}
-		send_testdata();
+		if (usb_ready) {
+			send_testdata();
+			gpio_set_led(LED4, 1);
+		}
 		gpio_set_led(LED5, gpio_get_switch());
 	}
 

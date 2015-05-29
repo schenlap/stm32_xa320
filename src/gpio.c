@@ -15,7 +15,7 @@ void gpio_toggle_led(uint32_t pin) {
 }
 
 int gpio_get_switch() {
-		gpio_get(SWITCHB1_PORT, SWITCHB1_PIN);
+	return gpio_get(SWITCHB1_PORT, SWITCHB1_PIN);
 }
 
 void gpio_setup(void)
