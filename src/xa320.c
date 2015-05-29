@@ -17,7 +17,8 @@ void send_testdata(void)
 	uint8_t buf[4] = {0, 0, 0, 0};
 	buf[0] = 'S';
 	buf[1] = 't';
-	buf[2] = 'e';
+	buf[2] = gpio_get_switch() ? '1' : '0';
+	buf[3] = '\n';
 	usb_send_packet(buf, 4);
 }
 
@@ -33,8 +34,6 @@ void task_usb(void) {
 			cnt = 0;
 		}
 	}
-
-	gpio_set_led(LED5, gpio_get_switch());
 }
 
 int main(void)
@@ -51,15 +50,12 @@ int main(void)
 
 	usb_setup();
 
-	gpio_set_led(LED5, 1);
-
 	task_create(task_usb, 100);
 
 	while (1) {
 			// Simple Taskswitcher
 			task_start();
 			task_time_increment();
-			usb_poll();
 	}
 }
 

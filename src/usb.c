@@ -18,20 +18,9 @@ static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
                           hid_buffer,
                           sizeof(hid_buffer));
     (void)bytes_read;
-	// TODO: handle incomind data
-	gpio_toggle_led(LED5);
-    // This function reads the packet and replaces it with the response buffer.
-    //bool reboot = packet_handler(hid_buffer);
-    // The full 64 bytes must be sent regardless of the amount of actual data.
-	hid_buffer[0] = 'A';
-	hid_buffer[1] = 'N';
-	hid_buffer[2] = 'T';
-	hid_buffer[3] = '*';
-    usbd_ep_write_packet(usbd_dev, 0x81, hid_buffer, sizeof(hid_buffer));
-//    if (reboot) {
-//        for (volatile int i = 0; i < 800000; ++i);
-//        scb_reset_system();
-//    }
+
+	/* handle incoming data */
+	gpio_set_led(LED5, hid_buffer[0] != 0);
 }
 
 static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
@@ -40,12 +29,6 @@ static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req
 	(void)complete;
 	(void)usbd_dev;
 
-	/*
-	if ((req->bmRequestType != 0x81) ||
-		(req->bRequest != USB_REQ_GET_DESCRIPTOR) ||
-		(req->wValue != 0x2200))
-			return 0;
-*/
 	switch(req->bmRequestType) {
 		case 0x81:
 			switch(req->bRequest){
@@ -90,9 +73,7 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 usbd_device *my_usb_device;
 
 void usb_send_packet(const void *buf, int len){
-    //gpio_toggle_led(LED5);
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0);
-    //gpio_clear(LED5, 0);
 }
 
 void usb_setup(void)
