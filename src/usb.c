@@ -10,8 +10,8 @@ uint8_t usb_ready = 0;
 
 volatile uint32_t last_usb_request_time;
 
-static uint8_t hid_buffer[4];
-
+static uint8_t hid_buffer[20];
+uint8_t test;
 static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
     uint16_t bytes_read = usbd_ep_read_packet(usbd_dev,
                           ep,
@@ -20,7 +20,10 @@ static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
     (void)bytes_read;
 
 	/* handle incoming data */
-	gpio_set_led(LED5, hid_buffer[0] != 0);
+	if (bytes_read >= 12) {
+		test = hid_buffer[10] & 0x10;
+		gpio_set_led(LED5, test); // 0x10 .. Bit4 .. ALT Led
+	}
 }
 
 static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
