@@ -76,8 +76,8 @@
 */
 #define DATA_PORT     GPIOA                           // assume "DATA" is on PA7
 #define DATA_PIN      GPIO7
-#define CLK_PORT      GPIOA                           // assume "CLK" is on PA4
-#define CLK_PIN       GPIO4
+#define CLK_PORT      GPIOA                           // assume "CLK" is on PA5
+#define CLK_PIN       GPIO5
 #define LOAD_PORT     GPIOA                           // assume "LOAD (nCS)" is on PA6
 #define LOAD_PIN      GPIO6
 
