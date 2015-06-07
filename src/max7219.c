@@ -49,7 +49,8 @@
 * Include Header Files
 *********************************************************************************************************
 */
-#include <8051.h>                                     // microcontroller header file
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/rcc.h>
 #include "max7219.h"                                  // MAX7219 header file
 
 
@@ -73,21 +74,12 @@
 * Macros
 *********************************************************************************************************
 */
-#define DATA_PORT     P3                              // assume "DATA" is on P3.5
-#define DATA_DDR      P3
-#define DATA_BIT      0x20
-#define DATA_0()      (DATA_PORT &= ~DATA_BIT)
-#define DATA_1()      (DATA_PORT |=  DATA_BIT)
-#define CLK_PORT      P3                              // assume "CLK" is on P3.4
-#define CLK_DDR       P3
-#define CLK_BIT       0x10
-#define CLK_0()       (CLK_PORT &= ~CLK_BIT)
-#define CLK_1()       (CLK_PORT |=  CLK_BIT)
-#define LOAD_PORT     P3                              // assume "LOAD" is on P3.3
-#define LOAD_DDR      P3
-#define LOAD_BIT      0x08
-#define LOAD_0()      (LOAD_PORT &= ~LOAD_BIT)
-#define LOAD_1()      (LOAD_PORT |=  LOAD_BIT)
+#define DATA_PORT     GPIOA                           // assume "DATA" is on PA7
+#define DATA_PIN      GPIO7
+#define CLK_PORT      GPIOA                           // assume "CLK" is on PA4
+#define CLK_PIN       GPIO4
+#define LOAD_PORT     GPIOA                           // assume "LOAD (nCS)" is on PA6
+#define LOAD_PIN      GPIO6
 
 
 /*
@@ -103,9 +95,9 @@
 * Private Function Prototypes
 *********************************************************************************************************
 */
-static void MAX7219_Write (unsigned char reg_number, unsigned char data);
-static void MAX7219_SendByte (unsigned char data);
-static unsigned char MAX7219_LookupCode (char character);
+static void max7219_Write (unsigned char reg_number, unsigned char data);
+static void max7219_SendByte (unsigned char data);
+static unsigned char max7219_LookupCode (char character);
 
 
 // ...................................... Public Functions ..............................................
@@ -120,18 +112,20 @@ static unsigned char MAX7219_LookupCode (char character);
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_Init (void)
+void max7219_setup (void)
 {
-  DATA_DDR |= DATA_BIT;                               // configure "DATA" as output
-  CLK_DDR  |= CLK_BIT;                                // configure "CLK"  as output
-  LOAD_DDR |= LOAD_BIT;                               // configure "LOAD" as output
+	rcc_periph_clock_enable(RCC_GPIOA); // TODO: RCC_xxxx aus PORT erzeugen
 
-  MAX7219_Write(REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
-  MAX7219_Write(REG_DECODE, 0x00);                    // set to "no decode" for all digits
-  MAX7219_ShutdownStop();                             // select normal operation (i.e. not shutdown)
-  MAX7219_DisplayTestStop();                          // select normal operation (i.e. not test mode)
-  MAX7219_Clear();                                    // clear all digits
-  MAX7219_SetBrightness(INTENSITY_MAX);               // set to maximum intensity
+	gpio_mode_setup(DATA_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, DATA_PIN);
+	gpio_mode_setup(CLK_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, CLK_PIN);
+	gpio_mode_setup(LOAD_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LOAD_PIN);
+
+	max7219_Write(REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
+	max7219_Write(REG_DECODE, 0x00);                    // set to "no decode" for all digits
+	max7219_ShutdownStop();                             // select normal operation (i.e. not shutdown)
+	max7219_DisplayTestStop();                          // select normal operation (i.e. not test mode)
+	max7219_Clear();                                    // clear all digits
+	max7219_SetBrightness(3);
 }
 
 
@@ -144,9 +138,9 @@ void MAX7219_Init (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_ShutdownStart (void)
+void max7219_ShutdownStart (void)
 {
-  MAX7219_Write(REG_SHUTDOWN, 0);                     // put MAX7219 into "shutdown" mode
+  max7219_Write(REG_SHUTDOWN, 0);                     // put MAX7219 into "shutdown" mode
 }
 
 
@@ -159,9 +153,9 @@ void MAX7219_ShutdownStart (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_ShutdownStop (void)
+void max7219_ShutdownStop (void)
 {
-  MAX7219_Write(REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
+  max7219_Write(REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
 }
 
 
@@ -174,9 +168,9 @@ void MAX7219_ShutdownStop (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_DisplayTestStart (void)
+void max7219_DisplayTestStart (void)
 {
-  MAX7219_Write(REG_DISPLAY_TEST, 1);                 // put MAX7219 into "display test" mode
+  max7219_Write(REG_DISPLAY_TEST, 1);                 // put MAX7219 into "display test" mode
 }
 
 
@@ -189,9 +183,9 @@ void MAX7219_DisplayTestStart (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_DisplayTestStop (void)
+void max7219_DisplayTestStop (void)
 {
-  MAX7219_Write(REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
+  max7219_Write(REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
 }
 
 
@@ -204,10 +198,10 @@ void MAX7219_DisplayTestStop (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_SetBrightness (char brightness)
+void max7219_SetBrightness (char brightness)
 {
   brightness &= 0x0f;                                 // mask off extra bits
-  MAX7219_Write(REG_INTENSITY, brightness);           // set brightness
+  max7219_Write(REG_INTENSITY, brightness);           // set brightness
 }
 
 
@@ -220,11 +214,11 @@ void MAX7219_SetBrightness (char brightness)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_Clear (void)
+void max7219_Clear (void)
 {
   char i;
   for (i=0; i < 8; i++)
-    MAX7219_Write(i, 0x00);                           // turn all segments off
+    max7219_Write(i, 0x00);                           // turn all segments off
 }
 
 
@@ -238,9 +232,30 @@ void MAX7219_Clear (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void MAX7219_DisplayChar (char digit, char character)
+void max7219_DisplayChar (char digit, char character)
 {
-  MAX7219_Write(digit, MAX7219_LookupCode(character));
+  max7219_Write(digit, max7219_LookupCode(character));
+}
+
+// Display char with data point
+void max7219_DisplayCharDp (char digit, char character, uint8_t dp)
+{
+	if (dp)
+		max7219_Write(digit, max7219_LookupCode(character));
+	else
+		max7219_Write(digit, max7219_LookupCode(character) | 0x80);
+}
+
+void max7219_display_string(uint8_t offset, char *str)
+{
+		while (*str != 0) {
+			if (*(str + 1) == '.') {
+				max7219_DisplayCharDp (offset++,  *str, 1);
+				str++;
+			} else {
+				max7219_DisplayCharDp (offset++,  *str, 0);
+			}
+		}
 }
 
 
@@ -284,6 +299,7 @@ static const struct {
   {'D', 0x3d},
   {'E', 0x4f},
   {'F', 0x47},
+  {'-', 0x01},
   {'\0', 0x00}
 };
 
@@ -296,9 +312,9 @@ static const struct {
 * Returns    : segment code
 *********************************************************************************************************
 */
-static unsigned char MAX7219_LookupCode (char character)
+static unsigned char max7219_LookupCode (char character)
 {
-  char i;
+  uint32_t i;
   for (i = 0; MAX7219_Font[i].ascii; i++)             // scan font table for ascii code
     if (character == MAX7219_Font[i].ascii)
       return MAX7219_Font[i].segs;                    // return segments code
@@ -316,13 +332,16 @@ static unsigned char MAX7219_LookupCode (char character)
 * Returns    : none
 *********************************************************************************************************
 */
-static void MAX7219_Write (unsigned char reg_number, unsigned char dataout)
+static void max7219_Write (unsigned char reg_number, unsigned char dataout)
 {
-  LOAD_1();                                           // take LOAD high to begin
-  MAX7219_SendByte(reg_number);                       // write register number to MAX7219
-  MAX7219_SendByte(dataout);                          // write data to MAX7219
-  LOAD_0();                                           // take LOAD low to latch in data
-  LOAD_1();                                           // take LOAD high to end
+//	gpio_set(LOAD_PORT, LOAD_BIT);
+	gpio_clear(LOAD_PORT, LOAD_PIN);
+	max7219_SendByte(reg_number);                       // write register number to MAX7219
+	max7219_SendByte(dataout);                          // write data to MAX7219
+//	uint32_t t = systime_get(void);
+//	gpio_clear(LOAD_PORT, LOAD_BIT);
+//	while (systime_get() < t + 2) ;                     // TODO test if necessary...
+	gpio_set(LOAD_PORT, LOAD_PIN);
 }
 
 
@@ -335,16 +354,16 @@ static void MAX7219_Write (unsigned char reg_number, unsigned char dataout)
 * Returns    : none
 *********************************************************************************************************
 */
-static void MAX7219_SendByte (unsigned char dataout)
+static void max7219_SendByte (unsigned char dataout)
 {
-  char i;
-  for (i=8; i>0; i--) {
-    unsigned char mask = 1 << (i - 1);                // calculate bitmask
-    CLK_0();                                          // bring CLK low
-    if (dataout & mask)                               // output one data bit
-      DATA_1();                                       //  "1"
-    else                                              //  or
-      DATA_0();                                       //  "0"
-    CLK_1();                                          // bring CLK high
+	char i;
+	for (i=8; i>0; i--) {
+		unsigned char mask = 1 << (i - 1);                // calculate bitmask
+		gpio_clear(CLK_PORT, CLK_PIN);
+		if (dataout & mask)                               // output one data bit
+			gpio_set(DATA_PORT, DATA_PIN);
+		else                                              //  or
+			gpio_clear(DATA_PORT, DATA_PIN);
+		gpio_set(CLK_PORT, CLK_PIN);
 	}
 }

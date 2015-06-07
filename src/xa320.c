@@ -7,6 +7,7 @@
 #include "task.h"
 #include "systime.h"
 #include "gpio.h"
+#include "max7219.h"
 #include "encoder.h"
 #include "usb.h"
 
@@ -76,6 +77,15 @@ int main(void)
 	systime_setup();
 
 	gpio_setup();
+
+	max7219_setup();
+	max7219_DisplayChar (0, 'x');
+	max7219_DisplayChar (1, 'a');
+	max7219_DisplayChar (2, '3');
+	max7219_DisplayChar (3, '2');
+	max7219_DisplayChar (4, '0');
+//	char str[] = "XA320";
+//	max7219_display_string(0, str);
 
 	encoder_setup();
 

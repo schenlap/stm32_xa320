@@ -12,11 +12,13 @@
 * Public Function Prototypes
 *********************************************************************************************************
 */
-void MAX7219_Init (void);
-void MAX7219_ShutdownStart (void);
-void MAX7219_ShutdownStop (void);
-void MAX7219_DisplayTestStart (void);
-void MAX7219_DisplayTestStop (void);
-void MAX7219_SetBrightness (char brightness);
-void MAX7219_Clear (void);
-void MAX7219_DisplayChar (char digit, char character);
+void max7219_setup (void);
+void max7219_ShutdownStart (void);
+void max7219_ShutdownStop (void);
+void max7219_DisplayTestStart (void);
+void max7219_DisplayTestStop (void);
+void max7219_SetBrightness (char brightness);
+void max7219_Clear (void);
+void max7219_DisplayChar (char digit, char character);
+void max7219_display_string(uint8_t offset, char *str);
+void max7219_DisplayCharDp (char digit, char character, uint8_t dp);
