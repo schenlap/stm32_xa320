@@ -10,7 +10,8 @@
 
 
 
-char *encoder_read(uint16_t nr);
+char *encoder_read_str(uint16_t nr);
+int16_t encoder_read(uint16_t nr, uint8_t *coarse);
 void encoder_task(void);
 void encoder_setup(void);
 

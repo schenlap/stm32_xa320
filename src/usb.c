@@ -12,6 +12,7 @@ volatile uint32_t last_usb_request_time;
 
 static uint8_t hid_buffer[64];
 uint8_t test;
+uint32_t nav1_freq;
 
 uint32_t usb_get_last_request_time(void) {
 	return last_usb_request_time;
@@ -27,7 +28,7 @@ static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
 	uint8_t len;
 	uint8_t cmd;
 	uint16_t id;
-	uint8_t data;
+	uint32_t data;
 
 	do {
 		len = hid_buffer[i];
@@ -36,11 +37,14 @@ static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
 		switch(cmd) {
 				case 0x02: /* Data from X-Plane */
 						id = (hid_buffer[i + 3]) << 8 | hid_buffer[i + 2];
-						data = hid_buffer[i + 6];
+						data = hid_buffer[i + 6] | hid_buffer[i+7] << 8;
+						data |= hid_buffer[i + 8] << 16 | hid_buffer[i+9] << 24;
 						if (id == 1)
 							gpio_set_led(LED5, !!data);
 						if (id == 2)
 							gpio_set_led(LED4, !!data);
+						if (id == 3)
+							nav1_freq = data;
 					break;
 				case 0x03: /* Enable / disable, is alway sent */
 						data = hid_buffer[i + 2];
@@ -101,7 +105,7 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 usbd_device *my_usb_device;
 
 void usb_send_packet(const void *buf, int len){
-	uint32_t timeout = systime_get() + 5; // wait max 5 milli sec
+	uint32_t timeout = systime_get() + 15; // wait max 15 milli sec
 
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
 			if (systime_get() > timeout)

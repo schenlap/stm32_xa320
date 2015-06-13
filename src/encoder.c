@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <libopencm3/stm32/gpio.h>
 
+#include "systime.h"
 #include "encoder.h"
 
 typedef struct {
@@ -12,8 +13,10 @@ typedef struct {
 
 typedef struct {
 		uint16_t pindata;
-		uint16_t value;
+		int16_t value;
 		char valstr[4];
+		uint32_t last;
+		uint8_t coarse;
 } enc_priv_t;
 
 enc_defs enc_desc[] = {
@@ -22,9 +25,9 @@ enc_defs enc_desc[] = {
 
 enc_priv_t enc_priv[ENC_CNT];
 
-uint16_t encoder_process(uint16_t d);
+int16_t encoder_process(uint16_t d);
 
-uint16_t encoder_process(uint16_t d) {
+int16_t encoder_process(uint16_t d) {
 	int16_t up = 0;
 
 	switch(d) {
@@ -46,6 +49,7 @@ uint16_t encoder_process(uint16_t d) {
 			case 0b1110: up = 1; break; 
 			case 0b1111: up = 0; break; 
 	}
+
 	return up;
 }
 
@@ -53,7 +57,9 @@ void encoder_task(void) {
 	int i;
 	enc_defs *p = enc_desc;
 	enc_priv_t *priv = enc_priv;
+	uint16_t up;
 	uint32_t pdata;           // Port data
+	uint32_t now = systime_get();
 
 	for (i = 0; i < (int)(sizeof(enc_desc) / sizeof(enc_defs)); i++, p++, priv++) {
 			pdata = gpio_port_read(p->port);
@@ -63,16 +69,38 @@ void encoder_task(void) {
 			if (pdata & p->pinb)
 				priv->pindata |= 0x02;
 
-			priv->value += encoder_process(priv->pindata);
+			up = encoder_process(priv->pindata);
+			if (up) {
+				priv->value += up;
+				if (priv->value / 4) {
+					if (now - priv->last < 15)
+						priv->coarse = 1;
+					priv->last = systime_get();
+				}
+			}
 	}
 }
 
-char *encoder_read(uint16_t nr) {
+char *encoder_read_str(uint16_t nr) {
 		if (nr >= ENC_CNT)
 			return 0;
 		snprintf(enc_priv[nr].valstr, 5, "%03d", enc_priv[nr].value);
-//		snprintf(enc_priv[nr].valstr, 5, "%04x", gpio_port_read(GPIOD));
+		enc_priv[nr].value = 0;
 		return enc_priv[nr].valstr;
+}
+
+int16_t encoder_read(uint16_t nr, uint8_t *coarse) {
+		int16_t val;
+
+		if (nr >= ENC_CNT)
+			return 0;
+		val = enc_priv[nr].value;
+		enc_priv[nr].value = enc_priv[nr].value % 4; // Rest erhalten
+
+		*coarse = enc_priv[nr].coarse;
+		enc_priv[nr].coarse = 0;
+
+		return val / 4;
 }
 
 void encoder_setup(void)

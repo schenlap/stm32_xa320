@@ -18,36 +18,7 @@ void task_usb(void);
 void task_encoder(void);
 void task_xplane(void);
 
-uint8_t buf[64];
-void send_testdata(void)
-{
-	char *p;
-	static uint16_t cnt = 0;
-	if (cnt++ > 10) {
-		cnt = 0;
-		p = encoder_read(ENC_A);
-	//	uint8_t buf[4] = {0, 0, 0, 0};
-		buf[0] = 0;
-		buf[1] = p[0];
-		buf[2] = p[1];
-		buf[3] = p[2];
-		buf[4] = p[3];
-		buf[5] = '\n';
-	}
-	usb_send_packet(buf, 64);
-}
-
-void send_buttons(void)
-{
-	uint8_t buff[4] = {0, 0, 0, 0};
-	buff[0] = 0;
-	buff[1] = (!!gpio_get_switch()) << 7;
-	buff[2] = (!!gpio_get_switch()) << 7; // AP - HDG Button
-	buff[3] = 0;
-	buff[1] = gpio_get_switch() ? 0xff : 0;
-	buff[2] = gpio_get_switch() ? 0xff : 0;
-	usb_send_packet(buff, 4);
-}
+extern uint32_t nav1_freq;
 
 void task_xplane(void) {
 	static uint8_t init = 0;
@@ -58,17 +29,33 @@ void task_xplane(void) {
 
 	if (!init && systime_get() - usb_get_last_request_time() < 500) {
 		init = 1;
-		teenys_register_dataref("sim/cockpit/electrical/strobe_lights_on", 1);
-		teenys_register_dataref("sim/cockpit/electrical/nav_lights_on", 1);
+		teensy_register_dataref("sim/cockpit/electrical/strobe_lights_on", 1);
+		teensy_register_dataref("sim/cockpit/electrical/nav_lights_on", 1);
+		teensy_register_dataref("sim/cockpit2/radios/actuators/nav1_frequency_hz", 1);
 	}
 
-	if (init) {
+	if (init && systime_get() - usb_get_last_request_time() < 500) {
 		gpio_set_led(LED6, 1);
 	} else {
 		if (cnt++ > 5) {
 			gpio_toggle_led(LED6);
 			cnt = 0;
 		}
+	}
+
+	uint8_t coarse = 0;
+	int16_t enc = encoder_read(ENC_A, &coarse);
+	if (enc) {
+		if (coarse)
+			nav1_freq += enc > 0 ? 100 : -100; // 1MHz
+		else
+			nav1_freq += enc * 5;	// 5kHz
+
+		// lap to 108-118MHz range
+		while (nav1_freq < 10800) nav1_freq += 1000;
+		while (nav1_freq >= 11800) nav1_freq -= 1000;
+
+		teensy_send_int(3, nav1_freq);
 	}
 }
 
@@ -102,12 +89,9 @@ int main(void)
 
 	usb_setup();
 
-//	task_create(task_usb, 10);
 	task_create(task_encoder, 2);
 	task_create(task_xplane, 10);
 
-
-	//sim/cockpit/electrical/strobe_lights_on   strobeLight = XPlaneRef("sim/cockpit/electrical/strobe_light_on");
 	while (1) {
 			// Simple Taskswitcher
 			task_start();
