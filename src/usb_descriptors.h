@@ -120,14 +120,14 @@ const struct usb_endpoint_descriptor hid_endpoint[] = {{
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bEndpointAddress = 0x81, /* Bit 0..3b EP Number, Bit 4..6b Reserved = 0, Bit7 dir: 0 .. Out, 1 .. in -> IN Endpoint*/
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
-	.wMaxPacketSize = 20,
+	.wMaxPacketSize = 64,
 	.bInterval = 10, /* Intervall for polling endpoint data transfers (1ms for low/full speed dev, 125us for high speed devices */
 }, {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bEndpointAddress = 0x01, /* Bit 0..3b EP Number, Bit 4..6b Reserved = 0, Bit7 dir: 0 .. Out, 1 .. in -> OUT Endpoint*/
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
-	.wMaxPacketSize = 20,
+	.wMaxPacketSize = 64,
 	.bInterval = 10, /* Intervall for polling endpoint data transfers (1ms for low/full speed dev, 125us for high speed devices */
 }};
 

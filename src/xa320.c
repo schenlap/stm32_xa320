@@ -10,13 +10,15 @@
 #include "max7219.h"
 #include "encoder.h"
 #include "usb.h"
+#include "teensy.h"
 
 void send_testdata(void);
 void send_buttons(void);
 void task_usb(void);
 void task_encoder(void);
+void task_xplane(void);
 
-uint8_t buf[6] = {'E', 'n', 0, 0, 0, 0};
+uint8_t buf[64];
 void send_testdata(void)
 {
 	char *p;
@@ -32,7 +34,7 @@ void send_testdata(void)
 		buf[4] = p[3];
 		buf[5] = '\n';
 	}
-	usb_send_packet(buf, 6);
+	usb_send_packet(buf, 64);
 }
 
 void send_buttons(void)
@@ -47,11 +49,20 @@ void send_buttons(void)
 	usb_send_packet(buff, 4);
 }
 
-void task_usb(void) {
+void task_xplane(void) {
+	static uint8_t init = 0;
 	static uint8_t cnt = 0;
 
-	if (usb_ready) {
-		send_testdata();
+	if (!usb_ready)
+		return;
+
+	if (!init && systime_get() - usb_get_last_request_time() < 500) {
+		init = 1;
+		teenys_register_dataref("sim/cockpit/electrical/strobe_lights_on", 1);
+		teenys_register_dataref("sim/cockpit/electrical/nav_lights_on", 1);
+	}
+
+	if (init) {
 		gpio_set_led(LED6, 1);
 	} else {
 		if (cnt++ > 5) {
@@ -91,9 +102,12 @@ int main(void)
 
 	usb_setup();
 
-	task_create(task_usb, 10);
+//	task_create(task_usb, 10);
 	task_create(task_encoder, 2);
+	task_create(task_xplane, 10);
 
+
+	//sim/cockpit/electrical/strobe_lights_on   strobeLight = XPlaneRef("sim/cockpit/electrical/strobe_light_on");
 	while (1) {
 			// Simple Taskswitcher
 			task_start();
