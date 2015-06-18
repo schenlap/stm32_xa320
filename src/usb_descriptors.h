@@ -5,7 +5,7 @@ const struct usb_device_descriptor dev = {
         .bDeviceClass = 0,     /* Class defined at interface level */
         .bDeviceSubClass = 0,
         .bDeviceProtocol = 0,
-        .bMaxPacketSize0 = 64, /* max data soze for endpoint 0 */
+        .bMaxPacketSize0 = 64, /* max data size for endpoint 0 */
         .idVendor = VENDOR_ID,
         .idProduct = PRODUCT_ID,
         .bcdDevice = 0x0100,   /* assigned by developer */
@@ -161,7 +161,7 @@ const struct usb_config_descriptor config = {
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
 	.bmAttributes = 0b11000000, /* D7 = fix 1 (USB 1.0 Bus Powered, D6 = self powered, D5 = remote waeup */
-	.bMaxPower = 0x32,          /* max current in 2mA units 0x32 -> 100mA*/
+	.bMaxPower = 0x64,          /* max current in 2mA units 0x32 -> 100mA*/
 
 	.interface = ifaces,
 };
