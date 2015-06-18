@@ -77,13 +77,17 @@ int main(void)
 	gpio_setup();
 
 	max7219_setup();
-	max7219_DisplayChar (0, 'x');
-	max7219_DisplayChar (1, 'a');
-	max7219_DisplayChar (2, '3');
-	max7219_DisplayChar (3, '2');
-	max7219_DisplayChar (4, '0');
-//	char str[] = "XA320";
-//	max7219_display_string(0, str);
+//	max7219_DisplayChar (0, 'x');
+/*	max7219_DisplayChar (7, '7');
+	max7219_DisplayChar (6, '6');
+	max7219_DisplayChar (5, '5');
+	max7219_DisplayChar (4, '4');
+	max7219_DisplayChar (3, '3');
+	max7219_DisplayChar (2, '2');
+	max7219_DisplayChar (1, '1');
+	max7219_DisplayChar (0, '0');*/
+	char str[] = "1234.56";
+	max7219_display_string(1, str);
 
 	encoder_setup();
 
