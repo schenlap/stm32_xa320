@@ -125,7 +125,7 @@ void max7219_setup (void)
 	max7219_ShutdownStop();                             // select normal operation (i.e. not shutdown)
 	max7219_DisplayTestStop();                          // select normal operation (i.e. not test mode)
 	max7219_Clear();                                    // clear all digits
-	max7219_SetBrightness(3);
+	max7219_SetBrightness(1);
 }
 
 
@@ -347,13 +347,9 @@ static unsigned char max7219_LookupCode (char character)
 */
 static void max7219_Write (unsigned char reg_number, unsigned char dataout)
 {
-//	gpio_set(LOAD_PORT, LOAD_BIT);
 	gpio_clear(LOAD_PORT, LOAD_PIN);
 	max7219_SendByte(reg_number);                       // write register number to MAX7219
 	max7219_SendByte(dataout);                          // write data to MAX7219
-//	uint32_t t = systime_get(void);
-//	gpio_clear(LOAD_PORT, LOAD_BIT);
-//	while (systime_get() < t + 2) ;                     // TODO test if necessary...
 	gpio_set(LOAD_PORT, LOAD_PIN);
 }
 
