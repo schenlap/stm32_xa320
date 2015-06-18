@@ -218,7 +218,7 @@ void max7219_Clear (void)
 {
   char i;
   for (i=0; i < 8; i++)
-    max7219_Write(i, 0x00);                           // turn all segments off
+    max7219_DisplayChar(i, ' ');                           // turn all segments off
 }
 
 
@@ -227,23 +227,23 @@ void max7219_Clear (void)
 * MAX7219_DisplayChar()
 *
 * Description: Display a character on the specified digit.
-* Arguments  : digit = digit number (0-7)
+* Arguments  : digit = digit number (0-7) left to right
 *              character = character to display (0-9, A-Z)
 * Returns    : none
 *********************************************************************************************************
 */
 void max7219_DisplayChar (char digit, char character)
 {
-  max7219_Write(digit, max7219_LookupCode(character));
+  max7219_Write(8-digit, max7219_LookupCode(character));
 }
 
 // Display char with data point
 void max7219_DisplayCharDp (char digit, char character, uint8_t dp)
 {
 	if (dp)
-		max7219_Write(digit, max7219_LookupCode(character));
+		max7219_Write(8-digit, max7219_LookupCode(character) | 0x80);
 	else
-		max7219_Write(digit, max7219_LookupCode(character) | 0x80);
+		max7219_Write(8-digit, max7219_LookupCode(character));
 }
 
 void max7219_display_string(uint8_t offset, char *str)
@@ -255,6 +255,7 @@ void max7219_display_string(uint8_t offset, char *str)
 			} else {
 				max7219_DisplayCharDp (offset++,  *str, 0);
 			}
+			str++;
 		}
 }
 
