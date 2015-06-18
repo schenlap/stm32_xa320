@@ -17,6 +17,7 @@ void send_buttons(void);
 void task_usb(void);
 void task_encoder(void);
 void task_xplane(void);
+void task_display(void);
 
 extern uint32_t nav1_freq;
 
@@ -64,6 +65,12 @@ void task_encoder(void) {
 	encoder_task();
 }
 
+void task_display(void) {
+	max7219_ClearAll();
+	char str[] = "1234.567890ABC";
+	max7219_display_string(1, str);
+}
+
 int main(void)
 {
 	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
@@ -76,7 +83,7 @@ int main(void)
 
 	gpio_setup();
 
-	max7219_setup();
+	max7219_setup(2);
 //	max7219_DisplayChar (0, 'x');
 /*	max7219_DisplayChar (7, '7');
 	max7219_DisplayChar (6, '6');
@@ -86,8 +93,9 @@ int main(void)
 	max7219_DisplayChar (2, '2');
 	max7219_DisplayChar (1, '1');
 	max7219_DisplayChar (0, '0');*/
-	char str[] = "1234.56";
-	max7219_display_string(1, str);
+	//char str[] = "1234.567890ABCDEF";
+	//char str[] = "1234.56789";
+	//max7219_display_string(1, str);
 
 	encoder_setup();
 
@@ -95,6 +103,7 @@ int main(void)
 
 	task_create(task_encoder, 2);
 	task_create(task_xplane, 10);
+	task_create(task_display, 100);
 
 	while (1) {
 			// Simple Taskswitcher

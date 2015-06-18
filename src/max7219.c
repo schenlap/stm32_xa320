@@ -59,6 +59,7 @@
 * Constants
 *********************************************************************************************************
 */
+#define REG_NOP           0x00                        // Nop for daisy chaining
 #define REG_DECODE        0x09                        // "decode mode" register
 #define REG_INTENSITY     0x0a                        // "intensity" register
 #define REG_SCAN_LIMIT    0x0b                        // "scan limit" register
@@ -87,7 +88,7 @@
 * Private Data
 *********************************************************************************************************
 */
-// ... none ...
+uint8_t max7219_cnt = 0;
 
 
 /*
@@ -95,7 +96,7 @@
 * Private Function Prototypes
 *********************************************************************************************************
 */
-static void max7219_Write (unsigned char reg_number, unsigned char data);
+static void max7219_Write (uint8_t daisy_nr, unsigned char reg_number, unsigned char dataout);
 static void max7219_SendByte (unsigned char data);
 static unsigned char max7219_LookupCode (char character);
 
@@ -108,11 +109,11 @@ static unsigned char max7219_LookupCode (char character);
 * MAX7219_Init()
 *
 * Description: Initialize MAX7219 module; must be called before any other MAX7219 functions.
-* Arguments  : none
+* Arguments  : daisy_cnt: nr of max7219 in daisy chain (1 .. 6)
 * Returns    : none
 *********************************************************************************************************
 */
-void max7219_setup (void)
+void max7219_setup (uint8_t daisy_cnt)
 {
 	rcc_periph_clock_enable(RCC_GPIOA); // TODO: RCC_xxxx aus PORT erzeugen
 
@@ -120,75 +121,22 @@ void max7219_setup (void)
 	gpio_mode_setup(CLK_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, CLK_PIN);
 	gpio_mode_setup(LOAD_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LOAD_PIN);
 
-	max7219_Write(REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
-	max7219_Write(REG_DECODE, 0x00);                    // set to "no decode" for all digits
-	max7219_ShutdownStop();                             // select normal operation (i.e. not shutdown)
-	max7219_DisplayTestStop();                          // select normal operation (i.e. not test mode)
-	max7219_Clear();                                    // clear all digits
-	max7219_SetBrightness(1);
+	max7219_cnt = daisy_cnt;
+	max7219_Write(1, REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
+	max7219_Write(1, REG_DECODE, 0x00);                    // set to "no decode" for all digits
+	max7219_Write(1, REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
+	max7219_Write(1, REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
+	max7219_ClearAll();                                    // clear all digits
+	max7219_SetBrightnessAll(0);
 }
 
 
-/*
-*********************************************************************************************************
-* MAX7219_ShutdownStart()
-*
-* Description: Shut down the display.
-* Arguments  : none
-* Returns    : none
-*********************************************************************************************************
-*/
-void max7219_ShutdownStart (void)
+void max7219_SetBrightnessAll (uint8_t brightness)
 {
-  max7219_Write(REG_SHUTDOWN, 0);                     // put MAX7219 into "shutdown" mode
+  char i;
+  for (i=1; i <= max7219_cnt ; i++)
+    max7219_SetBrightness(i, brightness);
 }
-
-
-/*
-*********************************************************************************************************
-* MAX7219_ShutdownStop()
-*
-* Description: Take the display out of shutdown mode.
-* Arguments  : none
-* Returns    : none
-*********************************************************************************************************
-*/
-void max7219_ShutdownStop (void)
-{
-  max7219_Write(REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
-}
-
-
-/*
-*********************************************************************************************************
-* MAX7219_DisplayTestStart()
-*
-* Description: Start a display test.
-* Arguments  : none
-* Returns    : none
-*********************************************************************************************************
-*/
-void max7219_DisplayTestStart (void)
-{
-  max7219_Write(REG_DISPLAY_TEST, 1);                 // put MAX7219 into "display test" mode
-}
-
-
-/*
-*********************************************************************************************************
-* MAX7219_DisplayTestStop()
-*
-* Description: Stop a display test.
-* Arguments  : none
-* Returns    : none
-*********************************************************************************************************
-*/
-void max7219_DisplayTestStop (void)
-{
-  max7219_Write(REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
-}
-
-
 /*
 *********************************************************************************************************
 * MAX7219_SetBrightness()
@@ -198,12 +146,15 @@ void max7219_DisplayTestStop (void)
 * Returns    : none
 *********************************************************************************************************
 */
-void max7219_SetBrightness (char brightness)
+void max7219_SetBrightness (uint8_t nr, char brightness)
 {
-  brightness &= 0x0f;                                 // mask off extra bits
-  max7219_Write(REG_INTENSITY, brightness);           // set brightness
-}
+	uint8_t i;
 
+	for (i = 1; i <= max7219_cnt; i++) {
+		brightness &= 0x0f;                                 // mask off extra bits
+		max7219_Write(nr, REG_INTENSITY, brightness);           // set brightness
+	}
+}
 
 /*
 *********************************************************************************************************
@@ -214,11 +165,27 @@ void max7219_SetBrightness (char brightness)
 * Returns    : none
 *********************************************************************************************************
 */
-void max7219_Clear (void)
+void max7219_ClearAll (void)
+{
+  char i;
+  for (i=1; i <= max7219_cnt ; i++)
+    max7219_Clear(i);                           // turn all segments off
+}
+
+/*
+*********************************************************************************************************
+* MAX7219_Clear()
+*
+* Description: Clear the display (all digits blank)
+* Arguments  : none
+* Returns    : none
+*********************************************************************************************************
+*/
+void max7219_Clear(uint8_t daisy_nr)
 {
   char i;
   for (i=0; i < 8; i++)
-    max7219_DisplayChar(i, ' ');                           // turn all segments off
+    max7219_DisplayChar(i + 8 * (daisy_nr - 1), ' ');                           // turn all segments off
 }
 
 
@@ -227,23 +194,37 @@ void max7219_Clear (void)
 * MAX7219_DisplayChar()
 *
 * Description: Display a character on the specified digit.
-* Arguments  : digit = digit number (0-7) left to right
+* Arguments  : digit = digit number (0-7*n) left to right
 *              character = character to display (0-9, A-Z)
 * Returns    : none
 *********************************************************************************************************
 */
-void max7219_DisplayChar (char digit, char character)
+void max7219_DisplayChar (uint8_t digit, char character)
 {
-  max7219_Write(8-digit, max7219_LookupCode(character));
+	uint8_t nr = 1;
+
+	if (digit >= 8) {
+		digit -= 8;
+		nr ++;
+	}
+
+	max7219_Write(nr, 8-digit, max7219_LookupCode(character));
 }
 
 // Display char with data point
-void max7219_DisplayCharDp (char digit, char character, uint8_t dp)
+void max7219_DisplayCharDp (uint8_t digit, char character, uint8_t dp)
 {
+	uint8_t nr = 1;
+
+	if (digit >= 8) {
+		digit -= 8;
+		nr ++;
+	}
+
 	if (dp)
-		max7219_Write(8-digit, max7219_LookupCode(character) | 0x80);
+		max7219_Write(nr, 8-digit, max7219_LookupCode(character) | 0x80);
 	else
-		max7219_Write(8-digit, max7219_LookupCode(character));
+		max7219_Write(nr, 8-digit, max7219_LookupCode(character));
 }
 
 void max7219_display_string(uint8_t offset, char *str)
@@ -345,11 +326,20 @@ static unsigned char max7219_LookupCode (char character)
 * Returns    : none
 *********************************************************************************************************
 */
-static void max7219_Write (unsigned char reg_number, unsigned char dataout)
+static void max7219_Write (uint8_t daisy_nr, unsigned char reg_number, unsigned char dataout)
 {
+	uint8_t i;
 	gpio_clear(LOAD_PORT, LOAD_PIN);
+	for (i = daisy_nr; i < max7219_cnt; i++) {
+		max7219_SendByte(REG_NOP);                      // write register number to MAX7219
+		max7219_SendByte(0);                            // write data to MAX7219
+	}
 	max7219_SendByte(reg_number);                       // write register number to MAX7219
 	max7219_SendByte(dataout);                          // write data to MAX7219
+	for (i = 1; i < daisy_nr; i++) {
+		max7219_SendByte(REG_NOP);                      // write register number to MAX7219
+		max7219_SendByte(0);                            // write data to MAX7219
+	}
 	gpio_set(LOAD_PORT, LOAD_PIN);
 }
 
