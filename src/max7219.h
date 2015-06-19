@@ -22,4 +22,5 @@ void max7219_Clear (uint8_t daisy_nr);
 void max7219_ClearAll (void);
 void max7219_DisplayChar (uint8_t digit, char character);
 void max7219_display_string(uint8_t offset, char *str);
+void max7219_display_string_fixpoint(uint8_t offset, char *str, uint8_t fp);
 void max7219_DisplayCharDp (uint8_t digit, char character, uint8_t dp);

@@ -243,6 +243,18 @@ void max7219_display_string(uint8_t offset, char *str)
 		}
 }
 
+void max7219_display_string_fixpoint(uint8_t offset, char *str, uint8_t fp)
+{
+		while (*str != 0) {
+			if (fp-- == 1) {
+				max7219_DisplayCharDp (offset++,  *str, 1);
+			} else {
+				max7219_DisplayCharDp (offset++,  *str, 0);
+			}
+			str++;
+		}
+}
+
 
 // ..................................... Private Functions ..............................................
 
