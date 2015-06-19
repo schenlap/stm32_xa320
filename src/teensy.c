@@ -5,7 +5,14 @@
 #include "usb.h"
 #include "teensy.h"
 
-static uint16_t ident = 0;
+#define MAX_IDS    50
+
+struct teensy_dat_t {
+	void (*cb)(uint8_t, uint32_t);
+};
+
+struct teensy_dat_t datids[MAX_IDS];
+
 uint8_t buf[64];
 volatile uint32_t last_request_time;
 
@@ -17,10 +24,12 @@ uint32_t teensy_get_last_request_time(void) {
 /*
  * type: 0 .. command, 1 .. integer, 2 .. float
  */
-uint8_t teensy_register_dataref(char *str, uint8_t type)
+uint8_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*cb)(uint8_t, uint32_t))
 {
+	if (ident >= MAX_IDS)
+		return 0;
+	datids[ident].cb = cb;
 	uint8_t len = strlen(str);
-	ident++;
 
 	buf[0] = len + 6;
 	buf[1] = 0x01;        // Register command
@@ -36,6 +45,9 @@ uint8_t teensy_register_dataref(char *str, uint8_t type)
 }
 
 void teensy_send_int(uint16_t id, uint32_t d) {
+	if (!usb_ready)
+		return;
+
 	buf[0] = 10;
 	buf[1] = 0x02;        // Write command
 	buf[2] = (uint8_t)(id & 0xFF);
@@ -50,8 +62,6 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	
 	usb_send_packet(buf, 64);
 }
-
-extern uint32_t nav1_freq;
 
 void teensy_usb_callback(uint8_t *hbuf) {
 	int i = 0;
@@ -69,12 +79,10 @@ void teensy_usb_callback(uint8_t *hbuf) {
 						id = (hbuf[i + 3]) << 8 | hbuf[i + 2];
 						data = hbuf[i + 6] | hbuf[i+7] << 8;
 						data |= hbuf[i + 8] << 16 | hbuf[i+9] << 24;
-						if (id == 1)
-							gpio_set_led(LED5, !!data);
-						if (id == 2)
-							gpio_set_led(LED4, !!data);
-						if (id == 3)
-							nav1_freq = data;
+						if (id < MAX_IDS) {
+							if (datids[id].cb)
+								datids[id].cb(id, data);
+						}
 					break;
 				case 0x03: /* Enable / disable, is alway sent */
 						data = hbuf[i + 2];
