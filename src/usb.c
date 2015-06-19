@@ -2,57 +2,23 @@
 #include "gpio.h"
 #include "usb.h"
 #include "usb_descriptors.h"
+#include "teensy.h" // TODO add register callback funtion and remove header here
 
 /* Buffer to be used for control requests. */
 uint8_t usbd_control_buffer[128];
 
 uint8_t usb_ready = 0;
 
-volatile uint32_t last_usb_request_time;
-
 static uint8_t hid_buffer[64];
-uint8_t test;
-uint32_t nav1_freq;
-
-uint32_t usb_get_last_request_time(void) {
-	return last_usb_request_time;
-}
 
 static void endpoint_callback(usbd_device *usbd_dev, uint8_t ep) {
     uint16_t bytes_read = usbd_ep_read_packet(usbd_dev,
                           ep,
                           hid_buffer,
                           sizeof(hid_buffer));
-    (void)bytes_read;
-	int i = 0;
-	uint8_t len;
-	uint8_t cmd;
-	uint16_t id;
-	uint32_t data;
 
-	do {
-		len = hid_buffer[i];
-		if (len < 2 || len > 64 - i) break;
-		cmd = hid_buffer[i + 1];
-		switch(cmd) {
-				case 0x02: /* Data from X-Plane */
-						id = (hid_buffer[i + 3]) << 8 | hid_buffer[i + 2];
-						data = hid_buffer[i + 6] | hid_buffer[i+7] << 8;
-						data |= hid_buffer[i + 8] << 16 | hid_buffer[i+9] << 24;
-						if (id == 1)
-							gpio_set_led(LED5, !!data);
-						if (id == 2)
-							gpio_set_led(LED4, !!data);
-						if (id == 3)
-							nav1_freq = data;
-					break;
-				case 0x03: /* Enable / disable, is alway sent */
-						data = hid_buffer[i + 2];
-						last_usb_request_time = systime_get();
-					break;
-		}
-		i += len;
-	} while (i < 64);
+    (void)bytes_read;
+	teensy_usb_callback(hid_buffer);
 }
 
 static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
@@ -133,5 +99,4 @@ void
 otg_fs_isr(void)
 {
 	usbd_poll(my_usb_device);
-//	gpio_toggle_led(LED4);
 }

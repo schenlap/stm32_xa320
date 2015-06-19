@@ -11,54 +11,15 @@
 #include "encoder.h"
 #include "usb.h"
 #include "teensy.h"
+#include "panel_rmp.h"
 
-void send_testdata(void);
-void send_buttons(void);
-void task_usb(void);
+//void send_testdata(void);
+//void send_buttons(void);
+//void task_usb(void);
 void task_encoder(void);
-void task_xplane(void);
 void task_display(void);
 
-extern uint32_t nav1_freq;
 
-void task_xplane(void) {
-	static uint8_t init = 0;
-	static uint8_t cnt = 0;
-
-	if (!usb_ready)
-		return;
-
-	if (!init && systime_get() - usb_get_last_request_time() < 500) {
-		init = 1;
-		teensy_register_dataref("sim/cockpit/electrical/strobe_lights_on", 1);
-		teensy_register_dataref("sim/cockpit/electrical/nav_lights_on", 1);
-		teensy_register_dataref("sim/cockpit2/radios/actuators/nav1_frequency_hz", 1);
-	}
-
-	if (init && systime_get() - usb_get_last_request_time() < 500) {
-		gpio_set_led(LED6, 1);
-	} else {
-		if (cnt++ > 5) {
-			gpio_toggle_led(LED6);
-			cnt = 0;
-		}
-	}
-
-	uint8_t coarse = 0;
-	int16_t enc = encoder_read(ENC_A, &coarse);
-	if (enc) {
-		if (coarse)
-			nav1_freq += enc > 0 ? 100 : -100; // 1MHz
-		else
-			nav1_freq += enc * 5;	// 5kHz
-
-		// lap to 108-118MHz range
-		while (nav1_freq < 10800) nav1_freq += 1000;
-		while (nav1_freq >= 11800) nav1_freq -= 1000;
-
-		teensy_send_int(3, nav1_freq);
-	}
-}
 
 
 void task_encoder(void) {
@@ -84,25 +45,13 @@ int main(void)
 	gpio_setup();
 
 	max7219_setup(2);
-//	max7219_DisplayChar (0, 'x');
-/*	max7219_DisplayChar (7, '7');
-	max7219_DisplayChar (6, '6');
-	max7219_DisplayChar (5, '5');
-	max7219_DisplayChar (4, '4');
-	max7219_DisplayChar (3, '3');
-	max7219_DisplayChar (2, '2');
-	max7219_DisplayChar (1, '1');
-	max7219_DisplayChar (0, '0');*/
-	//char str[] = "1234.567890ABCDEF";
-	//char str[] = "1234.56789";
-	//max7219_display_string(1, str);
 
 	encoder_setup();
 
 	usb_setup();
 
 	task_create(task_encoder, 2);
-	task_create(task_xplane, 10);
+	task_create(task_panel_rmp, 10);
 	task_create(task_display, 100);
 
 	while (1) {
