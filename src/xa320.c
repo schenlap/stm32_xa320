@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -13,9 +14,6 @@
 #include "teensy.h"
 #include "panel_rmp.h"
 
-//void send_testdata(void);
-//void send_buttons(void);
-//void task_usb(void);
 void task_encoder(void);
 void task_display(void);
 
@@ -27,9 +25,12 @@ void task_encoder(void) {
 }
 
 void task_display(void) {
-	max7219_ClearAll();
-	char str[] = "1234.567890ABC";
-	max7219_display_string(1, str);
+	char str[8];
+	snprintf(str, 8, "%5d", (int)panel_rmp_get_nav1_freq());
+	max7219_display_string_fixpoint(3, str, 3);
+	snprintf(str, 8, "%5d", (int)panel_rmp_get_nav1_stdby_freq());
+	max7219_display_string_fixpoint(8, str, 3);
+
 }
 
 int main(void)
@@ -53,6 +54,7 @@ int main(void)
 	task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);
 	task_create(task_display, 100);
+	task_create(gpio_task, 50);
 
 	while (1) {
 			// Simple Taskswitcher
