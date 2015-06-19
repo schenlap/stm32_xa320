@@ -115,6 +115,7 @@ static unsigned char max7219_LookupCode (char character);
 */
 void max7219_setup (uint8_t daisy_cnt)
 {
+	uint8_t i;
 	rcc_periph_clock_enable(RCC_GPIOA); // TODO: RCC_xxxx aus PORT erzeugen
 
 	gpio_mode_setup(DATA_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, DATA_PIN);
@@ -122,10 +123,12 @@ void max7219_setup (uint8_t daisy_cnt)
 	gpio_mode_setup(LOAD_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LOAD_PIN);
 
 	max7219_cnt = daisy_cnt;
-	max7219_Write(1, REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
-	max7219_Write(1, REG_DECODE, 0x00);                    // set to "no decode" for all digits
-	max7219_Write(1, REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
-	max7219_Write(1, REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
+	for (i = 1; i <= daisy_cnt; i++) {
+		max7219_Write(i, REG_SCAN_LIMIT, 7);                   // set up to scan all eight digits
+		max7219_Write(i, REG_DECODE, 0x00);                    // set to "no decode" for all digits
+		max7219_Write(i, REG_SHUTDOWN, 1);                     // put MAX7219 into "normal" mode
+		max7219_Write(i, REG_DISPLAY_TEST, 0);                 // put MAX7219 into "normal" mode
+	}
 	max7219_ClearAll();                                    // clear all digits
 	max7219_SetBrightnessAll(0);
 }
