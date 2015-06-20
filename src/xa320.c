@@ -18,18 +18,62 @@ void task_encoder(void);
 void task_display(void);
 
 
+uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act);
 
 
 void task_encoder(void) {
 	encoder_task();
 }
 
+uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act) {
+	static uint32_t freq_last;
+	static uint32_t freq_stdby_last;
+	static rmp_act_t act_last;
+	uint8_t new = 0;
+
+	if (freq != freq_last)
+		new = 1;
+	else if (freq_stdby != freq_stdby_last)
+		new = 1;
+	else if (act != act_last)
+		new = 1;
+
+	freq_last = freq;
+	freq_stdby_last = freq_stdby;
+	act_last = act;
+
+	return new;
+}
+
 void task_display(void) {
 	char str[8];
-	snprintf(str, 8, "%5d", (int)panel_rmp_get_nav1_freq());
-	max7219_display_string_fixpoint(3, str, 3);
-	snprintf(str, 8, "%5d", (int)panel_rmp_get_nav1_stdby_freq());
-	max7219_display_string_fixpoint(8, str, 3);
+	rmp_act_t act =  panel_rmp_get_active();
+	uint32_t freq, freq_stdby;
+
+	switch(act) {
+		case RMP_VOR:
+			freq = panel_rmp_get_nav1_freq();
+			freq_stdby = panel_rmp_get_nav1_stdby_freq();
+			if (!disp_in_newdata(freq, freq_stdby, act))
+				break;
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(3, str, 3);
+			snprintf(str, 8, "%5d", (int)freq_stdby);
+			max7219_display_string_fixpoint(8, str, 3);
+		break;
+		case RMP_ADF:
+			freq = panel_rmp_get_ndb_freq();
+			freq_stdby = panel_rmp_get_ndb_stdby_freq();
+			if (!disp_in_newdata(freq, freq_stdby, act))
+				break;
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(3, str, 99);
+			snprintf(str, 8, "%5d", (int)freq_stdby);
+			max7219_display_string_fixpoint(8, str, 99);
+		break;
+		default:
+		break;
+	}
 
 }
 

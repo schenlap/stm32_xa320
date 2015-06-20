@@ -11,18 +11,41 @@
 #define ID_NAV_LIGHT       1
 #define ID_NAV1_FREQ       2
 #define ID_NAV1_STDBY_FREQ 3
+#define ID_NDB_FREQ        4
+#define ID_NDB_STDBY_FREQ  5
+
+rmp_act_t rmp_act = RMP_ADF;
 
 uint32_t nav1_freq = 11000;
 uint32_t nav1_stdby_freq = 11100;
 
+uint32_t ndb_freq = 255;
+uint32_t ndb_stdby_freq = 255;
+
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_nav1(void);
+void panel_rmp_ndb(void);
+
+rmp_act_t panel_rmp_get_active(void) {
+	return rmp_act;
+}
 
 void task_panel_rmp(void) {
 	static uint8_t init = 0;
 	static uint8_t cnt = 0;
 
-	panel_rmp_nav1();
+	switch (rmp_act) {
+			case RMP_OFF:
+			break;
+			case RMP_VOR:
+				panel_rmp_nav1();
+			break;
+			case RMP_ADF:
+				panel_rmp_ndb();
+			break;
+			default:
+			break;
+	}
 
 	if (!usb_ready)
 		return;
@@ -67,6 +90,28 @@ void panel_rmp_nav1(void) {
 	}
 }
 
+void panel_rmp_ndb(void) {
+	uint8_t coarse = 0;
+	int16_t enc = encoder_read(ENC_A, &coarse);
+	if (enc) {
+		if (coarse)
+			ndb_stdby_freq += enc > 0 ? 10 : -10; // 10kHz
+		else
+			ndb_stdby_freq += enc;	// 1kHz
+
+		while (ndb_stdby_freq < 200) ndb_stdby_freq += 1;
+		while (ndb_stdby_freq >= 526) ndb_stdby_freq -= 1;
+
+		teensy_send_int(3, ndb_stdby_freq);
+	}
+
+	if (gpio_get_pos_event(SWITCH1)) {
+		uint32_t t = ndb_freq;
+		ndb_freq = ndb_stdby_freq;
+		ndb_stdby_freq = t;
+	}
+}
+
 uint32_t panel_rmp_get_nav1_freq(void) {
 	return nav1_freq;
 }
@@ -75,11 +120,21 @@ uint32_t panel_rmp_get_nav1_stdby_freq(void) {
 	return nav1_stdby_freq;
 }
 
+uint32_t panel_rmp_get_ndb_freq(void) {
+	return ndb_freq;
+}
+
+uint32_t panel_rmp_get_ndb_stdby_freq(void) {
+	return ndb_stdby_freq;
+}
+
 void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_FREQ, "sim/cockpit2/radios/actuators/nav1_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav1_standby_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_NDB_FREQ, "sim/cockpit2/radios/actuators/adf1_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_NDB_STDBY_FREQ, "sim/cockpit2/radios/actuators/adf1_standby_frequency_hz", 1, &panel_rmp_cb);
 }
 
 void panel_rmp_cb(uint8_t id, uint32_t data) {
@@ -95,6 +150,12 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				break;
 		case ID_NAV1_STDBY_FREQ:
 				nav1_stdby_freq = data;
+				break;
+		case ID_NDB_FREQ:
+				ndb_freq = data;
+				break;
+		case ID_NDB_STDBY_FREQ:
+				ndb_stdby_freq = data;
 				break;
 	}
 }
