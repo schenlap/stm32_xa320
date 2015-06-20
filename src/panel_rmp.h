@@ -20,4 +20,7 @@ uint32_t panel_rmp_get_nav1_stdby_freq(void);
 
 uint32_t panel_rmp_get_ndb_freq(void);
 uint32_t panel_rmp_get_ndb_stdby_freq(void);
+
+uint32_t panel_rmp_get_nav2_freq(void);
+uint32_t panel_rmp_get_nav2_stdby_freq(void);
 #endif /* PANEL_RMP_H */

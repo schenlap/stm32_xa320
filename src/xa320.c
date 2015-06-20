@@ -71,6 +71,16 @@ void task_display(void) {
 			snprintf(str, 8, "%5d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 99);
 		break;
+		case RMP_VOR2:
+			freq = panel_rmp_get_nav2_freq();
+			freq_stdby = panel_rmp_get_nav2_stdby_freq();
+			if (!disp_in_newdata(freq, freq_stdby, act))
+				break;
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(3, str, 3);
+			snprintf(str, 8, "%5d", (int)freq_stdby);
+			max7219_display_string_fixpoint(8, str, 3);
+		break;
 		default:
 		break;
 	}
