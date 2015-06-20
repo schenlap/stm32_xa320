@@ -24,7 +24,22 @@
 #define SWITCHB1 SWITCHB1_PIN
 
 
-#define SWITCH1   0
+#define SWITCH1         0
+#define SWITCH_SW_STBY  0
+#define SWITCH_NAV      1
+#define SWITCH_VOR      2
+#define SWITCH_ILS      3
+#define SWITCH_VOR2     4
+#define SWITCH_ADF      5
+#define SWITCH_BFO      6
+#define SWITCH_HF1      7
+#define SWITCH_HF2      8
+#define SWITCH_AM       9
+#define SWITCH_VHF1     10
+#define SWITCH_VHF2     11
+#define SWITCH_VHF3     12
+#define SWITCH_RMP_ON   13
+
 
 void gpio_setup(void);
 void gpio_set_led(uint32_t pin, uint32_t state);
