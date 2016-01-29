@@ -6,7 +6,8 @@
 #include <libopencm3/stm32/rcc.h>
 
 #define ENC_A     0
-#define ENC_CNT   1
+#define ENC_B     1
+#define ENC_CNT   2
 
 
 

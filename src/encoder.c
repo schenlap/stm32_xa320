@@ -20,7 +20,8 @@ typedef struct {
 } enc_priv_t;
 
 enc_defs enc_desc[] = {
-		{ENC_A, GPIOD, GPIO8, GPIO10}
+		{ENC_A, GPIOD, GPIO8, GPIO10},
+		{ENC_B, GPIOB, GPIO13, GPIO15}
 };
 
 enc_priv_t enc_priv[ENC_CNT];
