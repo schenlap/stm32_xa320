@@ -31,15 +31,38 @@ void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_nav1(void);
 void panel_rmp_ndb(void);
 void panel_rmp_nav2(void);
+uint8_t panel_rmp_switch(void);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
+}
+
+uint8_t panel_rmp_switch(void) {
+	rmp_act_t new = RMP_OFF;
+	rmp_act_t last = rmp_act;
+
+	if (gpio_get_pos_event(SWITCH_VOR))
+		new = RMP_VOR;
+	else if (gpio_get_pos_event(SWITCH_ILS))
+		new = RMP_ILS;
+	else if (gpio_get_pos_event(SWITCH_VOR2))
+		new = RMP_VOR2;
+	else if (gpio_get_pos_event(SWITCH_ADF))
+		new = RMP_ADF;
+	else if (gpio_get_pos_event(SWITCH_BFO))
+		new = RMP_BFO;
+	else
+		return 0; // No switch pressed
+
+	rmp_act = new;
+	return new != last;
 }
 
 void task_panel_rmp(void) {
 	static uint8_t init = 0;
 	static uint8_t cnt = 0;
 
+	panel_rmp_switch();
 
 	if (!usb_ready)
 		return;
