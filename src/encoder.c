@@ -33,21 +33,21 @@ int16_t encoder_process(uint16_t d) {
 
 	switch(d) {
 			case 0b0000: up = 0; break; 
-			case 0b0001: up = 1; break; 
-			case 0b0010: up = -1; break; 
+			case 0b0001: up = -1; break; 
+			case 0b0010: up = 1; break; 
 			case 0b0011: up = 0; break; 
-			case 0b0100: up = -1; break; 
+			case 0b0100: up = 1; break; 
 			case 0b0101: up = 0; break; 
 			case 0b0110: up = 0; break; 
-			case 0b0111: up = 1; break; 
+			case 0b0111: up = -1; break; 
 			
-			case 0b1000: up = 1; break; 
+			case 0b1000: up = -1; break; 
 			case 0b1001: up = 0; break; 
 			case 0b1010: up = 0; break; 
-			case 0b1011: up = -1; break; 
+			case 0b1011: up = 1; break; 
 			case 0b1100: up = 0; break; 
-			case 0b1101: up = -1; break; 
-			case 0b1110: up = 1; break; 
+			case 0b1101: up = 1; break; 
+			case 0b1110: up = -1; break; 
 			case 0b1111: up = 0; break; 
 	}
 
@@ -98,7 +98,8 @@ int16_t encoder_read(uint16_t nr, uint8_t *coarse) {
 		val = enc_priv[nr].value;
 		enc_priv[nr].value = enc_priv[nr].value % 4; // Rest erhalten
 
-		*coarse = enc_priv[nr].coarse;
+		if(coarse)
+			*coarse = enc_priv[nr].coarse;
 		enc_priv[nr].coarse = 0;
 
 		return val / 4;
