@@ -105,6 +105,8 @@ int main(void)
 
 	usb_setup();
 
+	gpio_set_led(LED6, 0);
+
 	task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);
 	task_create(task_display, 100);

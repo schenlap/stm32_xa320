@@ -40,6 +40,31 @@ void task_panel_rmp(void) {
 	static uint8_t init = 0;
 	static uint8_t cnt = 0;
 
+
+	if (!usb_ready)
+		return;
+
+	if (init && init < 50) {
+		init++;
+		if (init == 49)
+			panel_rmp_setup_datarefs();
+		return;
+	}
+
+	if (!init && systime_get() - teensy_get_last_request_time() < 500) {
+		init = 1;
+	}
+
+	if (init && systime_get() - teensy_get_last_request_time() < 500) {
+		gpio_set_led(LED6, 1);
+	} else {
+		if (cnt++ > 5) {
+			gpio_toggle_led(LED6);
+			cnt = 0;
+		}
+	}
+
+	
 	switch (rmp_act) {
 			case RMP_OFF:
 			break;
@@ -55,25 +80,6 @@ void task_panel_rmp(void) {
 			default:
 			break;
 	}
-
-	if (!usb_ready)
-		return;
-
-	if (!init && systime_get() - teensy_get_last_request_time() < 500) {
-		init = 1;
-		panel_rmp_setup_datarefs();
-	}
-
-	if (init && systime_get() - teensy_get_last_request_time() < 500) {
-		gpio_set_led(LED6, 1);
-	} else {
-		if (cnt++ > 5) {
-			gpio_toggle_led(LED6);
-			cnt = 0;
-		}
-	}
-
-	
 }
 
 void panel_rmp_nav1(void) {
