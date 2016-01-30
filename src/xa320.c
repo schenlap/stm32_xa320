@@ -62,6 +62,15 @@ void task_display(void) {
 			max7219_display_string_fixpoint(8, str, 3);
 			max7219_display_string(0, "V1");
 		break;
+		case RMP_VOR_CRS:
+			freq = panel_rmp_get_nav1_crs();
+			if (!disp_in_newdata(freq, 0, act))
+				break;
+			max7219_display_string_fixpoint(3, "     ", 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string(0, "V1");
+		break;
 		case RMP_ADF:
 			freq = panel_rmp_get_ndb_freq();
 			freq_stdby = panel_rmp_get_ndb_stdby_freq();
@@ -82,6 +91,15 @@ void task_display(void) {
 			max7219_display_string_fixpoint(3, str, 3);
 			snprintf(str, 8, "%5d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 3);
+			max7219_display_string(0, "V2");
+		break;
+		case RMP_VOR2_CRS:
+			freq = panel_rmp_get_nav2_crs();
+			if (!disp_in_newdata(freq, 0, act))
+				break;
+			max7219_display_string_fixpoint(3, "     ", 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(8, str, 99);
 			max7219_display_string(0, "V2");
 		break;
 		case RMP_COM1:

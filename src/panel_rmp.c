@@ -11,25 +11,29 @@
 #define ID_NAV_LIGHT       1
 #define ID_NAV1_FREQ       2
 #define ID_NAV1_STDBY_FREQ 3
-#define ID_NDB_FREQ        4
-#define ID_NDB_STDBY_FREQ  5
-#define ID_NAV2_FREQ       6
-#define ID_NAV2_STDBY_FREQ 7
-#define ID_COM1_FREQ       8
-#define ID_COM1_STDBY_FREQ 9
-#define ID_COM2_FREQ       10
-#define ID_COM2_STDBY_FREQ 11
+#define ID_NAV1_CRS        4
+#define ID_NDB_FREQ        5
+#define ID_NDB_STDBY_FREQ  6
+#define ID_NAV2_FREQ       7
+#define ID_NAV2_STDBY_FREQ 8
+#define ID_NAV2_CRS        9
+#define ID_COM1_FREQ       10
+#define ID_COM1_STDBY_FREQ 11
+#define ID_COM2_FREQ       12
+#define ID_COM2_STDBY_FREQ 13
 
 rmp_act_t rmp_act = RMP_VOR;
 
 uint32_t nav1_freq = 11000;
 uint32_t nav1_stdby_freq = 11100;
+int32_t nav1_crs = 90;
 
 uint32_t ndb_freq = 255;
 uint32_t ndb_stdby_freq = 255;
 
 uint32_t nav2_freq = 11000;
 uint32_t nav2_stdby_freq = 11100;
+int32_t nav2_crs = 90;
 
 uint32_t com1_freq = 12170;
 uint32_t com1_stdby_freq = 12170;
@@ -41,6 +45,7 @@ void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_ndb(void);
 uint8_t panel_rmp_switch(void);
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
+void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low_step, int32_t max, int32_t min, uint32_t id_act);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
@@ -51,12 +56,18 @@ uint8_t panel_rmp_switch(void) {
 	rmp_act_t last = rmp_act;
 
 	if (gpio_get_pos_event(SWITCH_VOR))
-		new = RMP_VOR;
+		if (last == RMP_VOR)
+			new = RMP_VOR_CRS;
+		else
+			new = RMP_VOR;
 	else if (gpio_get_pos_event(SWITCH_ILS))
 		new = RMP_ILS;
-	else if (gpio_get_pos_event(SWITCH_VOR2))
-		new = RMP_VOR2;
-	else if (gpio_get_pos_event(SWITCH_ADF))
+	else if (gpio_get_pos_event(SWITCH_VOR2)) {
+		if (last == RMP_VOR2)
+			new = RMP_VOR2_CRS;
+		else
+			new = RMP_VOR2;
+	} else if (gpio_get_pos_event(SWITCH_ADF))
 		new = RMP_ADF;
 	else if (gpio_get_pos_event(SWITCH_BFO))
 		new = RMP_BFO;
@@ -92,6 +103,14 @@ void task_panel_rmp(void) {
 				                  ID_NAV1_STDBY_FREQ,
 				                  ID_NAV1_FREQ);
 			break;
+			case RMP_VOR_CRS:
+				panel_rmp_general_single_float(&nav1_crs,
+				                  100,
+				                  1,
+				                  359,
+				                  0,
+				                  ID_NAV1_CRS);
+			break;
 			case RMP_ADF:
 				panel_rmp_ndb();
 			break;
@@ -106,6 +125,14 @@ void task_panel_rmp(void) {
 				                  10800,
 				                  ID_NAV2_STDBY_FREQ,
 				                  ID_NAV2_FREQ);
+			break;
+			case RMP_VOR2_CRS:
+				panel_rmp_general_single_float(&nav2_crs,
+				                  100,
+				                  1,
+				                  359,
+				                  0,
+				                  ID_NAV2_CRS);
 			break;
 			case RMP_COM1:
 				panel_rmp_general(&com1_stdby_freq,
@@ -159,6 +186,35 @@ void task_panel_rmp(void) {
 			cnt = 0;
 		}
 	}
+}
+
+void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low_step, int32_t max, int32_t min, uint32_t id_act) {
+	int16_t enc_high = encoder_read(ENC_B, 0);
+	int16_t enc_low = encoder_read(ENC_A, 0);
+	int32_t last = *act;
+	int32_t tmp = *act;
+	float f;
+
+	if (enc_low) {
+		tmp += enc_low * low_step;	// 5kHz
+		if (tmp < min) tmp = max;
+		if (tmp > max) tmp = min;
+		*act = tmp;
+	} else if (enc_high) {
+		tmp += enc_high * high_step;	// 1MHz
+		if (tmp < min) {
+			while (tmp + high_step < max) tmp += high_step;
+		}
+		*act = tmp;
+		if (*act > max) {
+			tmp = *act % high_step;
+			*act = min + tmp;
+		}
+	}
+
+	f = *act;
+	if (*act != last)
+		teensy_send_float(id_act, f);
 }
 
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act) {
@@ -241,6 +297,10 @@ uint32_t panel_rmp_get_nav1_stdby_freq(void) {
 	return nav1_stdby_freq;
 }
 
+uint32_t panel_rmp_get_nav1_crs(void) {
+	return nav1_crs;
+}
+
 uint32_t panel_rmp_get_ndb_freq(void) {
 	return ndb_freq;
 }
@@ -255,6 +315,10 @@ uint32_t panel_rmp_get_nav2_freq(void) {
 
 uint32_t panel_rmp_get_nav2_stdby_freq(void) {
 	return nav2_stdby_freq;
+}
+
+uint32_t panel_rmp_get_nav2_crs(void) {
+	return nav2_crs;
 }
 
 uint32_t panel_rmp_get_com1_freq(void) {
@@ -278,10 +342,12 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_FREQ, "sim/cockpit2/radios/actuators/nav1_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav1_standby_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV1_CRS, "sim/cockpit/radios/nav1_obs_degm", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_NDB_FREQ, "sim/cockpit2/radios/actuators/adf1_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NDB_STDBY_FREQ, "sim/cockpit2/radios/actuators/adf1_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_FREQ, "sim/cockpit2/radios/actuators/nav2_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav2_standby_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV2_CRS, "sim/cockpit/radios/nav2_obs_degm", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM1_FREQ, "sim/cockpit2/radios/actuators/com1_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM1_STDBY_FREQ, "sim/cockpit2/radios/actuators/com1_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM2_FREQ, "sim/cockpit2/radios/actuators/com2_frequency_hz", 1, &panel_rmp_cb);
@@ -302,6 +368,9 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 		case ID_NAV1_STDBY_FREQ:
 				nav1_stdby_freq = data;
 				break;
+		case ID_NAV1_CRS:
+				nav1_crs = teensy_from_float(data);
+				break;
 		case ID_NDB_FREQ:
 				ndb_freq = data;
 				break;
@@ -313,6 +382,9 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				break;
 		case ID_NAV2_STDBY_FREQ:
 				nav2_stdby_freq = data;
+				break;
+		case ID_NAV2_CRS:
+				nav2_crs = data;
 				break;
 		case ID_COM1_FREQ:
 				com1_freq = data;
