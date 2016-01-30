@@ -63,6 +63,30 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	usb_send_packet(buf, 64);
 }
 
+void teensy_send_float(uint16_t id, float d) {
+	if (!usb_ready)
+		return;
+        union {
+                uint8_t b[4];
+                float f;
+        } u;
+
+	u.f = d;
+	buf[0] = 10;
+	buf[1] = 0x02;        // Write command
+	buf[2] = (uint8_t)(id & 0xFF);
+	buf[3] = (uint8_t)(id >> 8);
+	buf[4] = 2;           // Float
+	buf[5] = 0;           // reserved
+	buf[6] = u.b[0];
+	buf[7] = u.b[1];
+	buf[8] = u.b[2];
+	buf[9] = u.b[3];
+	buf[10] = 0; // len of next command
+	
+	usb_send_packet(buf, 64);
+}
+
 void teensy_usb_callback(uint8_t *hbuf) {
 	int i = 0;
 	uint8_t len;
@@ -91,4 +115,13 @@ void teensy_usb_callback(uint8_t *hbuf) {
 		}
 		i += len;
 	} while (i < 64);
+}
+
+float teensy_from_float(uint32_t data) {
+        union {
+                uint32_t u;
+                float f;
+        } u;
+	u.u = data;
+	return u.f;
 }
