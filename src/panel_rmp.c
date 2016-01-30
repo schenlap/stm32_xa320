@@ -59,26 +59,28 @@ uint8_t panel_rmp_switch(void) {
 }
 
 void task_panel_rmp(void) {
-	static uint8_t init = 0;
-	static uint8_t cnt = 0;
+	static uint32_t init_cnt = 0;
+	static uint32_t cnt = 0;
 
 	panel_rmp_switch();
 
 	if (!usb_ready)
 		return;
 
-	if (init && init < 50) {
-		init++;
-		if (init == 49)
+	if (init_cnt && (init_cnt < 50)) {
+		if (init_cnt == 48) {
 			panel_rmp_setup_datarefs();
+		}
+		init_cnt++;
 		return;
 	}
 
-	if (!init && systime_get() - teensy_get_last_request_time() < 500) {
-		init = 1;
+	if ((!init_cnt) && (systime_get() - teensy_get_last_request_time() < 500)) {
+		gpio_set_led(LED6,0);
+		init_cnt = 1;
 	}
 
-	if (init && systime_get() - teensy_get_last_request_time() < 500) {
+	if (init_cnt && systime_get() - teensy_get_last_request_time() < 500) {
 		gpio_set_led(LED6, 1);
 	} else {
 		if (cnt++ > 5) {

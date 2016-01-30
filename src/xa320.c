@@ -123,9 +123,9 @@ int main(void)
 	task_create(gpio_task, 50);
 
 	while (1) {
-			// Simple Taskswitcher
-			task_start();
-			task_time_increment();
+		// Simple Taskswitcher
+		task_start();
+		task_time_increment();
 	}
 }
 
