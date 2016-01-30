@@ -73,6 +73,7 @@ uint8_t panel_rmp_switch(void) {
 
 void task_panel_rmp(void) {
 	static uint32_t init_cnt = 0;
+	static uint8_t is_init = 0;
 	static uint32_t cnt = 0;
 
 	panel_rmp_switch();
@@ -137,7 +138,10 @@ void task_panel_rmp(void) {
 
 	if (init_cnt && (init_cnt < 50)) {
 		if (init_cnt == 48) {
-			panel_rmp_setup_datarefs();
+			if (!is_init) {
+				panel_rmp_setup_datarefs();
+				is_init = 1;
+			}
 		}
 		init_cnt++;
 	}
