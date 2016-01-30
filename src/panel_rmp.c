@@ -32,6 +32,7 @@ void panel_rmp_nav1(void);
 void panel_rmp_ndb(void);
 void panel_rmp_nav2(void);
 uint8_t panel_rmp_switch(void);
+void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
@@ -88,22 +89,79 @@ void task_panel_rmp(void) {
 			cnt = 0;
 		}
 	}
-
 	
 	switch (rmp_act) {
 			case RMP_OFF:
 			break;
 			case RMP_VOR:
-				panel_rmp_nav1();
+				//panel_rmp_nav1();
+				panel_rmp_general(&nav1_stdby_freq,
+				                  &nav1_freq,
+				                  100,
+				                  100,
+				                  5,
+				                  11800,
+				                  10800,
+				                  ID_NAV1_STDBY_FREQ,
+				                  ID_NAV1_FREQ);
 			break;
 			case RMP_ADF:
 				panel_rmp_ndb();
 			break;
 			case RMP_VOR2:
-				panel_rmp_nav2();
+				//panel_rmp_nav2();
+				panel_rmp_general(&nav2_stdby_freq,
+				                  &nav2_freq,
+				                  100,
+				                  100,
+				                  5,
+				                  11800,
+				                  10800,
+				                  ID_NAV2_STDBY_FREQ,
+				                  ID_NAV2_FREQ);
 			break;
 			default:
 			break;
+	}
+}
+
+void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act) {
+	int16_t enc_high = encoder_read(ENC_B, 0);
+	int16_t enc_low = encoder_read(ENC_A, 0);
+	int16_t hv;
+	int16_t tmp;
+
+	if (enc_low) {
+		hv = *stdby / comma_value;
+		tmp = *stdby % comma_value;
+
+		tmp += enc_low * low_step;	// 5kHz
+
+		// lap to 0-995kHz range
+		if (tmp < 0) tmp += comma_value - low_step;
+		if (tmp >= comma_value) tmp = 0;
+
+		*stdby = hv * 100 + tmp;
+		if (*stdby > max) nav1_stdby_freq = max;
+
+		teensy_send_int(id_stdby, *stdby);
+	}
+	if (enc_high) {
+		*stdby += enc_high * high_step;	// 1MHz
+
+		// lap to 108-118MHz range
+		while (*stdby < min) *stdby += high_step;
+		while (*stdby >= max) *stdby -= high_step;
+
+		teensy_send_int(id_stdby, *stdby);
+	}
+
+	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
+		uint32_t t = *act;
+		*act = *stdby;
+		*stdby = t;
+		teensy_send_int(id_act, *act);
+		teensy_send_int(id_stdby, *stdby);
 	}
 }
 
@@ -138,7 +196,7 @@ void panel_rmp_nav1(void) {
 		teensy_send_int(ID_NAV1_STDBY_FREQ, nav1_stdby_freq);
 	}
 
-	if (gpio_get_pos_event(SWITCH1)) {
+	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
 		uint32_t t = nav1_freq;
 		nav1_freq = nav1_stdby_freq;
 		nav1_stdby_freq = t;
@@ -170,7 +228,7 @@ void panel_rmp_ndb(void) {
 		teensy_send_int(ID_NDB_STDBY_FREQ, ndb_stdby_freq);
 	}
 
-	if (gpio_get_pos_event(SWITCH1)) {
+	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
 		uint32_t t = ndb_freq;
 		ndb_freq = ndb_stdby_freq;
 		ndb_stdby_freq = t;
@@ -210,7 +268,7 @@ void panel_rmp_nav2(void) {
 		teensy_send_int(ID_NAV2_STDBY_FREQ, nav2_stdby_freq);
 	}
 
-	if (gpio_get_pos_event(SWITCH1)) {
+	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
 		uint32_t t = nav2_freq;
 		nav2_freq = nav2_stdby_freq;
 		nav2_stdby_freq = t;
