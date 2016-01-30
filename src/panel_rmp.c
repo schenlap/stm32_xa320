@@ -15,8 +15,12 @@
 #define ID_NDB_STDBY_FREQ  5
 #define ID_NAV2_FREQ       6
 #define ID_NAV2_STDBY_FREQ 7
+#define ID_COM1_FREQ       8
+#define ID_COM1_STDBY_FREQ 9
+#define ID_COM2_FREQ       10
+#define ID_COM2_STDBY_FREQ 11
 
-rmp_act_t rmp_act = RMP_ADF;
+rmp_act_t rmp_act = RMP_VOR;
 
 uint32_t nav1_freq = 11000;
 uint32_t nav1_stdby_freq = 11100;
@@ -26,6 +30,12 @@ uint32_t ndb_stdby_freq = 255;
 
 uint32_t nav2_freq = 11000;
 uint32_t nav2_stdby_freq = 11100;
+
+uint32_t com1_freq = 12170;
+uint32_t com1_stdby_freq = 12170;
+
+uint32_t com2_freq = 12170;
+uint32_t com2_stdby_freq = 12170;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_nav1(void);
@@ -52,6 +62,10 @@ uint8_t panel_rmp_switch(void) {
 		new = RMP_ADF;
 	else if (gpio_get_pos_event(SWITCH_BFO))
 		new = RMP_BFO;
+	else if (gpio_get_pos_event(SWITCH_COM1))
+		new = RMP_COM1;
+	else if (gpio_get_pos_event(SWITCH_COM2))
+		new = RMP_COM2;
 	else
 		return 0; // No switch pressed
 
@@ -119,6 +133,28 @@ void task_panel_rmp(void) {
 				                  10800,
 				                  ID_NAV2_STDBY_FREQ,
 				                  ID_NAV2_FREQ);
+			break;
+			case RMP_COM1:
+				panel_rmp_general(&com1_stdby_freq,
+				                  &com1_freq,
+				                  100,
+				                  100,
+				                  5,
+				                  13600,
+				                  11800,
+				                  ID_COM1_STDBY_FREQ,
+				                  ID_COM1_FREQ);
+			break;
+			case RMP_COM2:
+				panel_rmp_general(&com2_stdby_freq,
+				                  &com2_freq,
+				                  100,
+				                  100,
+				                  5,
+				                  13600,
+				                  11800,
+				                  ID_COM2_STDBY_FREQ,
+				                  ID_COM2_FREQ);
 			break;
 			default:
 			break;
@@ -301,6 +337,22 @@ uint32_t panel_rmp_get_nav2_stdby_freq(void) {
 	return nav2_stdby_freq;
 }
 
+uint32_t panel_rmp_get_com1_freq(void) {
+	return com1_freq;
+}
+
+uint32_t panel_rmp_get_com1_stdby_freq(void) {
+	return com1_stdby_freq;
+}
+
+uint32_t panel_rmp_get_com2_freq(void) {
+	return com2_freq;
+}
+
+uint32_t panel_rmp_get_com2_stdby_freq(void) {
+	return com2_stdby_freq;
+}
+
 void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
@@ -310,6 +362,10 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_NDB_STDBY_FREQ, "sim/cockpit2/radios/actuators/adf1_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_FREQ, "sim/cockpit2/radios/actuators/nav2_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav2_standby_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_FREQ, "sim/cockpit2/radios/actuators/com1_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_STDBY_FREQ, "sim/cockpit2/radios/actuators/com1_standby_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM2_FREQ, "sim/cockpit2/radios/actuators/com2_frequency_hz", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM2_STDBY_FREQ, "sim/cockpit2/radios/actuators/com2_standby_frequency_hz", 1, &panel_rmp_cb);
 }
 
 void panel_rmp_cb(uint8_t id, uint32_t data) {
@@ -337,6 +393,18 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				break;
 		case ID_NAV2_STDBY_FREQ:
 				nav2_stdby_freq = data;
+				break;
+		case ID_COM1_FREQ:
+				com1_freq = data;
+				break;
+		case ID_COM1_STDBY_FREQ:
+				com1_stdby_freq = data;
+				break;
+		case ID_COM2_FREQ:
+				com2_freq = data;
+				break;
+		case ID_COM2_STDBY_FREQ:
+				com2_stdby_freq = data;
 				break;
 	}
 }

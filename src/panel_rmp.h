@@ -10,7 +10,9 @@ typedef enum {
 	RMP_ILS,
 	RMP_VOR2, /* MLS */
 	RMP_ADF,
-	RMP_BFO
+	RMP_BFO,
+	RMP_COM1,
+	RMP_COM2
 } rmp_act_t;
 
 rmp_act_t panel_rmp_get_active(void);
@@ -23,4 +25,10 @@ uint32_t panel_rmp_get_ndb_stdby_freq(void);
 
 uint32_t panel_rmp_get_nav2_freq(void);
 uint32_t panel_rmp_get_nav2_stdby_freq(void);
+
+uint32_t panel_rmp_get_com1_freq(void);
+uint32_t panel_rmp_get_com1_stdby_freq(void);
+
+uint32_t panel_rmp_get_com2_freq(void);
+uint32_t panel_rmp_get_com2_stdby_freq(void);
 #endif /* PANEL_RMP_H */
