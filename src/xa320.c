@@ -139,7 +139,7 @@ int main(void)
 
 	gpio_set_led(LED6, 0);
 
-	task_create(task_encoder, 2);
+	//task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);
 	task_create(task_display, 100);
 	task_create(gpio_task, 50);
