@@ -22,6 +22,8 @@
 #define ID_COM2_FREQ       12
 #define ID_COM2_STDBY_FREQ 13
 #define ID_AVIONICS_POWER  14
+#define ID_AUTOP_HEADING   15
+#define ID_AUTOP_ALT       16
 
 static uint8_t is_init = 0;
 rmp_act_t rmp_act = RMP_VOR;
@@ -44,6 +46,9 @@ uint32_t com2_freq = 12170;
 uint32_t com2_stdby_freq = 12170;
 
 uint32_t avionics_power = 99; // must be != 0|1 to be sent on startup
+
+int32_t autop_heading = 90;
+int32_t autop_alt = 2000;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_ndb(void);
@@ -73,9 +78,12 @@ uint8_t panel_rmp_switch(void) {
 			new = RMP_VOR2;
 	} else if (gpio_get_pos_event(SWITCH_ADF))
 		new = RMP_ADF;
-	else if (gpio_get_pos_event(SWITCH_BFO))
-		new = RMP_BFO;
-	else if (gpio_get_pos_event(SWITCH_COM1))
+	else if (gpio_get_pos_event(SWITCH_BFO)) {
+		if (last == RMP_BFO)
+			new = RMP_BFO_ALT;
+		else
+			new = RMP_BFO;
+	} else if (gpio_get_pos_event(SWITCH_COM1))
 		new = RMP_COM1;
 	else if (gpio_get_pos_event(SWITCH_COM2))
 		new = RMP_COM2;
@@ -158,6 +166,22 @@ void task_panel_rmp(void) {
 				                  11800,
 				                  ID_COM2_STDBY_FREQ,
 				                  ID_COM2_FREQ);
+			break;
+			case RMP_BFO:
+				panel_rmp_general_single_float(&autop_heading,
+				                  100,
+				                  1,
+				                  359,
+				                  0,
+				                  ID_AUTOP_HEADING);
+			break;
+			case RMP_BFO_ALT:
+				panel_rmp_general_single_float(&autop_alt,
+				                  100,
+				                  10,
+				                  90000,
+				                  0,
+				                  ID_AUTOP_ALT);
 			break;
 			default:
 			break;
@@ -350,6 +374,14 @@ void panel_rmp_set_avionics_power(uint32_t on) {
 	}
 }
 
+uint32_t panel_rmp_get_autop_heading(void) {
+	return autop_heading;
+}
+
+uint32_t panel_rmp_get_autop_alt(void) {
+	return autop_alt;
+}
+
 void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
@@ -366,6 +398,8 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_COM2_FREQ, "sim/cockpit2/radios/actuators/com2_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM2_STDBY_FREQ, "sim/cockpit2/radios/actuators/com2_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/radios/actuators/nav1_obs_deg_mag_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", 2, &panel_rmp_cb);
 }
 
 void panel_rmp_cb(uint8_t id, uint32_t data) {

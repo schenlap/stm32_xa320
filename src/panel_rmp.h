@@ -12,7 +12,8 @@ typedef enum {
 	RMP_VOR2, /* MLS */
 	RMP_VOR2_CRS, /* MLS */
 	RMP_ADF,
-	RMP_BFO,
+	RMP_BFO, /* Autopilot heading */
+	RMP_BFO_ALT, /* Autopilot height */
 	RMP_COM1,
 	RMP_COM2
 } rmp_act_t;
@@ -35,6 +36,9 @@ uint32_t panel_rmp_get_com1_stdby_freq(void);
 
 uint32_t panel_rmp_get_com2_freq(void);
 uint32_t panel_rmp_get_com2_stdby_freq(void);
+
+uint32_t panel_rmp_get_autop_heading(void);
+uint32_t panel_rmp_get_autop_alt(void);
 
 // Setter
 void panel_rmp_set_avionics_power(uint32_t on);

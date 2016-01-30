@@ -131,6 +131,24 @@ void task_display(void) {
 			max7219_display_string_fixpoint(8, str, 3);
 			max7219_display_string(0, "C2");
 		break;
+		case RMP_BFO:
+			freq = panel_rmp_get_autop_heading();
+			if (!disp_in_newdata(freq, 0, act))
+				break;
+			max7219_display_string_fixpoint(3, "     ", 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string(0, "AH");
+		break;
+		case RMP_BFO_ALT:
+			freq = panel_rmp_get_autop_alt();
+			if (!disp_in_newdata(freq, 0, act))
+				break;
+			max7219_display_string_fixpoint(3, "     ", 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string(0, "AA");
+		break;
 		default:
 			if (!disp_in_newdata(0, 0, act))
 				break;
