@@ -40,7 +40,7 @@
 #define SWITCH_VHF1     10
 #define SWITCH_VHF2     11
 #define SWITCH_VHF3     12
-#define SWITCH_RMP_ON   13
+#define SWITCH_RMP_OFF  13
 
 
 void gpio_setup(void);

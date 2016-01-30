@@ -35,4 +35,7 @@ uint32_t panel_rmp_get_com1_stdby_freq(void);
 
 uint32_t panel_rmp_get_com2_freq(void);
 uint32_t panel_rmp_get_com2_stdby_freq(void);
+
+// Setter
+void panel_rmp_set_avionics_power(uint32_t on);
 #endif /* PANEL_RMP_H */

@@ -16,6 +16,7 @@
 
 void task_encoder(void);
 void task_display(void);
+void task_switches(void);
 
 
 uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act);
@@ -49,6 +50,12 @@ void task_display(void) {
 	char str[8];
 	rmp_act_t act =  panel_rmp_get_active();
 	uint32_t freq, freq_stdby;
+
+	if (gpio_get_state(SWITCH_RMP_OFF)) {
+		disp_in_newdata(-1, -1, RMP_OFF);
+		max7219_ClearAll();
+		return;	
+	}
 
 	switch(act) {
 		case RMP_VOR:
@@ -137,6 +144,16 @@ void task_display(void) {
 
 }
 
+void task_switches(void) {
+	uint32_t on;
+	static uint32_t on_last = 99;
+	on = !gpio_get_state(SWITCH_RMP_OFF);
+	panel_rmp_set_avionics_power(on);
+	if (on != on_last) {
+		on_last = on;
+	}
+}
+
 int main(void)
 {
 	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
@@ -160,6 +177,7 @@ int main(void)
 	//task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);
 	task_create(task_display, 100);
+	task_create(task_switches, 100);
 	task_create(gpio_task, 50);
 
 	while (1) {
