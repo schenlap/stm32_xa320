@@ -38,9 +38,7 @@ uint32_t com2_freq = 12170;
 uint32_t com2_stdby_freq = 12170;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
-void panel_rmp_nav1(void);
 void panel_rmp_ndb(void);
-void panel_rmp_nav2(void);
 uint8_t panel_rmp_switch(void);
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
 
@@ -108,7 +106,6 @@ void task_panel_rmp(void) {
 			case RMP_OFF:
 			break;
 			case RMP_VOR:
-				//panel_rmp_nav1();
 				panel_rmp_general(&nav1_stdby_freq,
 				                  &nav1_freq,
 				                  100,
@@ -201,46 +198,6 @@ void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint
 	}
 }
 
-void panel_rmp_nav1(void) {
-	int16_t enc_high = encoder_read(ENC_B, 0);
-	int16_t enc_low = encoder_read(ENC_A, 0);
-	int16_t hv;
-	int16_t tmp;
-
-	if (enc_low) {
-		hv = nav1_stdby_freq / 100;
-		tmp = nav1_stdby_freq % 100;
-
-		tmp += enc_low * 5;	// 5kHz
-
-		// lap to 0-995kHz range
-		if (tmp < 0) tmp += 95;
-		if (tmp > 95) tmp = 0;
-
-		nav1_stdby_freq = hv * 100 + tmp;
-		if (nav1_stdby_freq > 11800) nav1_stdby_freq = 11800;
-
-		teensy_send_int(ID_NAV1_STDBY_FREQ, nav1_stdby_freq);
-	}
-	if (enc_high) {
-		nav1_stdby_freq += enc_high * 100;	// 1MHz
-
-		// lap to 108-118MHz range
-		while (nav1_stdby_freq < 10800) nav1_stdby_freq += 1000;
-		while (nav1_stdby_freq >= 11800) nav1_stdby_freq -= 1000;
-
-		teensy_send_int(ID_NAV1_STDBY_FREQ, nav1_stdby_freq);
-	}
-
-	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
-		uint32_t t = nav1_freq;
-		nav1_freq = nav1_stdby_freq;
-		nav1_stdby_freq = t;
-		teensy_send_int(ID_NAV1_FREQ, nav1_freq);
-		teensy_send_int(ID_NAV1_STDBY_FREQ, nav1_stdby_freq);
-	}
-}
-
 void panel_rmp_ndb(void) {
 	uint8_t coarse = 0;
 	int16_t enc_high = encoder_read(ENC_B, 0);
@@ -270,46 +227,6 @@ void panel_rmp_ndb(void) {
 		ndb_stdby_freq = t;
 		teensy_send_int(ID_NDB_STDBY_FREQ, ndb_stdby_freq);
 		teensy_send_int(ID_NDB_FREQ, ndb_freq);
-	}
-}
-
-void panel_rmp_nav2(void) {
-	int16_t enc_high = encoder_read(ENC_B, 0);
-	int16_t enc_low = encoder_read(ENC_A, 0);
-	int16_t hv;
-	int16_t tmp;
-
-	if (enc_low) {
-		hv = nav2_stdby_freq / 100;
-		tmp = nav2_stdby_freq % 100;
-
-		tmp += enc_low * 5;	// 5kHz
-
-		// lap to 0-995kHz range
-		if (tmp < 0) tmp += 95;
-		if (tmp > 95) tmp = 0;
-
-		nav2_stdby_freq = hv * 100 + tmp;
-		if (nav2_stdby_freq > 11800) nav2_stdby_freq = 11800;
-
-		teensy_send_int(ID_NAV2_STDBY_FREQ, nav2_stdby_freq);
-	}
-	if (enc_high) {
-		nav2_stdby_freq += enc_high * 100;	// 1MHz
-
-		// lap to 108-118MHz range
-		while (nav2_stdby_freq < 10800) nav2_stdby_freq += 1000;
-		while (nav2_stdby_freq >= 11800) nav2_stdby_freq -= 1000;
-
-		teensy_send_int(ID_NAV2_STDBY_FREQ, nav2_stdby_freq);
-	}
-
-	if (gpio_get_pos_event(SWITCH_SW_STBY)) {
-		uint32_t t = nav2_freq;
-		nav2_freq = nav2_stdby_freq;
-		nav2_stdby_freq = t;
-		teensy_send_int(ID_NAV2_FREQ, nav2_freq);
-		teensy_send_int(ID_NAV2_STDBY_FREQ, nav2_stdby_freq);
 	}
 }
 
