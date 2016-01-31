@@ -398,7 +398,7 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_COM2_FREQ, "sim/cockpit2/radios/actuators/com2_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM2_STDBY_FREQ, "sim/cockpit2/radios/actuators/com2_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/radios/actuators/nav1_obs_deg_mag_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", 2, &panel_rmp_cb);
 }
 
