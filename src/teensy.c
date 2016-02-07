@@ -63,6 +63,19 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	usb_send_packet(buf, 64);
 }
 
+void teensy_send_command_once(uint16_t id) {
+	if (!usb_ready)
+		return;
+
+	buf[0] = 4;
+	buf[1] = 0x06;        // Command once
+	buf[2] = (uint8_t)(id & 0xFF);
+	buf[3] = (uint8_t)(id >> 8);
+	buf[4] = 0; // len of next command
+	
+	usb_send_packet(buf, 64);
+}
+
 void teensy_send_float(uint16_t id, float d) {
 	if (!usb_ready)
 		return;

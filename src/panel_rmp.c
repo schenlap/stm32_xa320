@@ -284,6 +284,17 @@ void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint
 	}
 }
 
+void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t small_up, uint32_t small_down) {
+	int16_t enc_high = encoder_read(ENC_B, 0);
+	int16_t enc_low = encoder_read(ENC_A, 0);
+
+	if (enc_high)
+		teensy_send_command_once(enc_high > 0 ? large_up : large_down);
+	
+	if (enc_low)
+		teensy_send_command_once(enc_low > 0 ? small_up : small_down);
+}
+
 void panel_rmp_ndb(void) {
 	uint8_t coarse = 0;
 	int16_t enc_high = encoder_read(ENC_B, 0);
