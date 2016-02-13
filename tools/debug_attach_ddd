@@ -1,0 +1,3 @@
+#!/bin/bash
+ddd --debugger arm-none-eabi-gdb --command tools/gdb-attach.cfg xa320
+#arm-none-eabi-gdb src/xa320.elf -x tools/gdb-attach.cfg
