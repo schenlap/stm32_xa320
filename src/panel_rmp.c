@@ -255,7 +255,7 @@ void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low
 
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act) {
 	int16_t enc_high = encoder_read(ENC_B, 0);
-	int16_t enc_low = encoder_read(ENC_A, 0) + 1;
+	int16_t enc_low = encoder_read(ENC_A, 0);
 	int16_t hv;
 	int16_t tmp;
 
