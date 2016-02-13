@@ -1,0 +1,16 @@
+# Object files
+*.d
+
+# Debug files
+*.map
+*.o
+
+# Swap file
+*.swp
+
+# Binaries
+*.elf
+*.hex
+
+# Logs
+*.log
