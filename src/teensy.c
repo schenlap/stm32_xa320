@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "systime.h"
+#include "task.h"
 #include "gpio.h"
 #include "usb.h"
 #include "teensy.h"
@@ -40,7 +41,9 @@ uint8_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*c
 	strncpy((char *)&buf[6], (char *)str, 64 - 5);
 	buf[len + 6] = 0; // len of next command
 	
+	lock_irq();
 	usb_send_packet(buf, 64);
+	unlock_irq();
 	return ident;
 }
 
@@ -59,8 +62,10 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	buf[8] = (uint8_t) (d >> 16);
 	buf[9] = (uint8_t) (d >> 24);
 	buf[10] = 0; // len of next command
-	
+
+	lock_irq();
 	usb_send_packet(buf, 64);
+	unlock_irq();
 }
 
 void teensy_send_command_once(uint16_t id) {
@@ -72,8 +77,10 @@ void teensy_send_command_once(uint16_t id) {
 	buf[2] = (uint8_t)(id & 0xFF);
 	buf[3] = (uint8_t)(id >> 8);
 	buf[4] = 0; // len of next command
-	
+
+	lock_irq();
 	usb_send_packet(buf, 64);
+	unlock_irq();
 }
 
 void teensy_send_float(uint16_t id, float d) {
@@ -97,7 +104,9 @@ void teensy_send_float(uint16_t id, float d) {
 	buf[9] = u.b[3];
 	buf[10] = 0; // len of next command
 	
+	lock_irq();
 	usb_send_packet(buf, 64);
+	unlock_irq();
 }
 
 void teensy_usb_callback(uint8_t *hbuf) {
