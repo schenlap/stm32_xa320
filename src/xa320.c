@@ -110,8 +110,8 @@ void task_display(void) {
 			max7219_display_string(0, "V2");
 		break;
 		case RMP_COM1:
-			freq = panel_rmp_get_com1_freq();
-			freq_stdby = panel_rmp_get_com1_stdby_freq();
+			freq = panel_rmp_get_com1_freq() / 10;
+			freq_stdby = panel_rmp_get_com1_stdby_freq() / 10;
 			if (!disp_in_newdata(freq, freq_stdby, act))
 				break;
 			snprintf(str, 8, "%5d", (int)freq);
@@ -121,8 +121,8 @@ void task_display(void) {
 			max7219_display_string(0, "C1");
 		break;
 		case RMP_COM2:
-			freq = panel_rmp_get_com2_freq();
-			freq_stdby = panel_rmp_get_com2_stdby_freq();
+			freq = panel_rmp_get_com2_freq() / 10;
+			freq_stdby = panel_rmp_get_com2_stdby_freq() / 10;
 			if (!disp_in_newdata(freq, freq_stdby, act))
 				break;
 			snprintf(str, 8, "%5d", (int)freq);

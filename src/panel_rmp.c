@@ -24,6 +24,10 @@
 #define ID_AVIONICS_POWER  14
 #define ID_AUTOP_HEADING   15
 #define ID_AUTOP_ALT       16
+#define ID_COM1_LARGE_UP   17
+#define ID_COM1_LARGE_DOWN 18
+#define ID_COM1_SMALL_UP   19
+#define ID_COM1_SMALL_DOWN 20
 
 static uint8_t is_init = 0;
 rmp_act_t rmp_act = RMP_VOR;
@@ -39,11 +43,11 @@ uint32_t nav2_freq = 11000;
 uint32_t nav2_stdby_freq = 11100;
 int32_t nav2_crs = 90;
 
-uint32_t com1_freq = 12170;
-uint32_t com1_stdby_freq = 12170;
+uint32_t com1_freq10 = 121700; // * 10 um 0.02, 0.05, 0.07, 0.10 darzustellen
+uint32_t com1_stdby_freq10 = 121700;
 
-uint32_t com2_freq = 12170;
-uint32_t com2_stdby_freq = 12170;
+uint32_t com2_freq10 = 121700; // * 10
+uint32_t com2_stdby_freq10 = 121700;
 
 uint32_t avionics_power = 99; // must be != 0|1 to be sent on startup
 
@@ -53,8 +57,9 @@ int32_t autop_alt = 2000;
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_ndb(void);
 uint8_t panel_rmp_switch(void);
-void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
+void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
 void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low_step, int32_t max, int32_t min, uint32_t id_act);
+void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t small_up, uint32_t small_down);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
@@ -146,24 +151,28 @@ void task_panel_rmp(void) {
 				                  ID_NAV2_CRS);
 			break;
 			case RMP_COM1:
-				panel_rmp_general(&com1_stdby_freq,
-				                  &com1_freq,
-				                  100,
-				                  100,
-				                  5,
-				                  13600,
-				                  11800,
+#ifdef QPAC_A320
+				panel_send_dial_commands(ID_COM1_LARGE_UP, ID_COM1_LARGE_DOWN, ID_COM1_SMALL_UP, ID_COM1_SMALL_DOWN);
+#else
+				panel_rmp_general(&com1_stdby_freq10,
+				                  &com1_freq10,
+				                  1000,
+				                  1000,
+				                  25,
+				                  136000,
+				                  118000,
 				                  ID_COM1_STDBY_FREQ,
 				                  ID_COM1_FREQ);
+#endif
 			break;
 			case RMP_COM2:
-				panel_rmp_general(&com2_stdby_freq,
-				                  &com2_freq,
-				                  100,
-				                  100,
-				                  5,
-				                  13600,
-				                  11800,
+				panel_rmp_general(&com2_stdby_freq10,
+				                  &com2_freq10,
+				                  1000,
+				                  1000,
+				                  25,
+				                  136000,
+				                  118000,
 				                  ID_COM2_STDBY_FREQ,
 				                  ID_COM2_FREQ);
 			break;
@@ -244,9 +253,9 @@ void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low
 		teensy_send_float(id_act, f);
 }
 
-void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act) {
+void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act) {
 	int16_t enc_high = encoder_read(ENC_B, 0);
-	int16_t enc_low = encoder_read(ENC_A, 0);
+	int16_t enc_low = encoder_read(ENC_A, 0) + 1;
 	int16_t hv;
 	int16_t tmp;
 
@@ -260,7 +269,7 @@ void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint8_t comma_value, uint
 		if (tmp < 0) tmp += comma_value - low_step;
 		if (tmp >= comma_value) tmp = 0;
 
-		*stdby = hv * 100 + tmp;
+		*stdby = hv * comma_value + tmp;
 		if (*stdby > max) nav1_stdby_freq = max;
 
 		teensy_send_int(id_stdby, *stdby);
@@ -360,19 +369,19 @@ uint32_t panel_rmp_get_nav2_crs(void) {
 }
 
 uint32_t panel_rmp_get_com1_freq(void) {
-	return com1_freq;
+	return com1_freq10;
 }
 
 uint32_t panel_rmp_get_com1_stdby_freq(void) {
-	return com1_stdby_freq;
+	return com1_stdby_freq10;
 }
 
 uint32_t panel_rmp_get_com2_freq(void) {
-	return com2_freq;
+	return com2_freq10;
 }
 
 uint32_t panel_rmp_get_com2_stdby_freq(void) {
-	return com2_stdby_freq;
+	return com2_stdby_freq10;
 }
 
 void panel_rmp_set_avionics_power(uint32_t on) {
@@ -404,13 +413,23 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_NAV2_FREQ, "sim/cockpit2/radios/actuators/nav2_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav2_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_CRS, "sim/cockpit/radios/nav2_obs_degm", 2, &panel_rmp_cb);
-		teensy_register_dataref(ID_COM1_FREQ, "sim/cockpit2/radios/actuators/com1_frequency_hz", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_COM1_STDBY_FREQ, "sim/cockpit2/radios/actuators/com1_standby_frequency_hz", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_COM2_FREQ, "sim/cockpit2/radios/actuators/com2_frequency_hz", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_COM2_STDBY_FREQ, "sim/cockpit2/radios/actuators/com2_standby_frequency_hz", 1, &panel_rmp_cb);
+		//teensy_register_dataref(ID_COM1_FREQ, "sim/cockpit2/radios/actuators/com1_frequency_hz_833", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_FREQ, "*2/radios/actuators/com1_frequency_hz_833", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_STDBY_FREQ, "*2/radios/actuators/com1_standby_frequency_hz_833", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM2_FREQ, "*2/radios/actuators/com2_frequency_hz_833", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM2_STDBY_FREQ, "*2/radios/actuators/com2_standby_frequency_hz_833", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", 2, &panel_rmp_cb);
+#ifdef QPAC_A320
+		teensy_register_dataref(ID_COM1_STDBY_FREQ,   "AirbusFBW/RMP1StbyFreq", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_LARGE_UP, "AirbusFBW/RMP1FreqUpLrg", 0, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_LARGE_DOWN, "AirbusFBW/RMP1FreqDownLrg", 0, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_SMALL_UP, "AirbusFBW/RMP1FreqUpSml", 0, &panel_rmp_cb);
+		teensy_register_dataref(ID_COM1_SMALL_DOWN, "AirbusFBW/RMP1FreqDownSml", 0, &panel_rmp_cb);
+#else
+#endif
+
 }
 
 void panel_rmp_cb(uint8_t id, uint32_t data) {
@@ -446,16 +465,16 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				nav2_crs = data;
 				break;
 		case ID_COM1_FREQ:
-				com1_freq = data;
+				com1_freq10 = data;
 				break;
 		case ID_COM1_STDBY_FREQ:
-				com1_stdby_freq = data;
+				com1_stdby_freq10 = data;
 				break;
 		case ID_COM2_FREQ:
-				com2_freq = data;
+				com2_freq10 = data;
 				break;
 		case ID_COM2_STDBY_FREQ:
-				com2_stdby_freq = data;
+				com2_stdby_freq10 = data;
 				break;
 		case ID_AVIONICS_POWER:
 				//avionics_power_on = data;
