@@ -1,0 +1,22 @@
+About
+=====
+
+This is the firmware, running on an stm32f4 eval board, for a radio managment panel (RMP) of QPAC A320 X-Plane airplane. It registers dataref at (a modified) teensy X-Plane_Plugin from github.com/schenlap/X-Plane_Plugin and lets you set radio and nav frequencies and courses.
+
+The usage of the RPM differs from the original RMP or the simulate RMP in QPAC A320 to be useable in a more generic way and later in different aircrafts.
+
+Hardware
+--------
+STM32F407 MB997B discovery kit www.st.com/en/evaluation-tools/stm32f4discovery.html
+For gpio wiring see gpio.c,
+for encoder wiring see encoder_exti.c
+for 7 segemnt display wiring see max7219.c.
+
+Building the code
+-----------------
+cd libopencm3
+make
+
+Usage
+-----
+todo
