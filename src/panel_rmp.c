@@ -438,7 +438,7 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				gpio_set_led(LED5, !!data);
 				break;
 		case ID_NAV_LIGHT:
-				gpio_set_led(LED4, !!data);
+				//gpio_set_led(LED4, !!data);
 				break;
 		case ID_NAV1_FREQ:
 				nav1_freq = data;

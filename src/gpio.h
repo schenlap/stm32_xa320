@@ -5,21 +5,15 @@
 #include <stdint.h>
 #include <libopencm3/stm32/rcc.h>
 
-#define LED3_PIN GPIO13 // orange
-#define LED3_PORT GPIOD
-#define LED4_PIN GPIO12 // green
-#define LED4_PORT GPIOD
-#define LED5_PIN GPIO14 // red
-#define LED5_PORT GPIOD
-#define LED6_PIN GPIO15 // blue
-#define LED6_PORT GPIOD
+#define LED5_PIN GPIO4 // red
+#define LED5_PORT GPIOC
+#define LED6_PIN GPIO5 // blue
+#define LED6_PORT GPIOC
 
-#define LED3 LED3_PIN
-#define LED4 LED4_PIN
 #define LED5 LED5_PIN
 #define LED6 LED6_PIN
 
-#define SWITCHB1_PIN GPIO0
+#define SWITCHB1_PIN GPIO4
 #define SWITCHB1_PORT GPIOA
 #define SWITCHB1 SWITCHB1_PIN
 
