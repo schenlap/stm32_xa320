@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "max7219.h"
 #include "encoder.h"
+#include "max6956.h"
 #include "usb.h"
 #include "teensy.h"
 #include "panel_rmp.h"
@@ -191,6 +192,8 @@ int main(void)
 	usb_setup();
 
 	gpio_set_led(LED6, 0);
+
+	max6956_setup();
 
 	//task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);
