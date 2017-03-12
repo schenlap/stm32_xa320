@@ -29,8 +29,10 @@
 		# OpenOCD specific variables
 
 		OOCD		?= openocd
-		OOCD_INTERFACE	?= stlink-v2
-		OOCD_BOARD	?= stm32f4discovery
+		#OOCD_INTERFACE	?= stlink-v2
+		OOCD_INTERFACE	?= jlink
+		#OOCD_BOARD	?= stm32f4discovery
+		OOCD_BOARD	?= stm32_rmp
 
 		################################################################################
 		# Black Magic Probe specific variables
