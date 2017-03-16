@@ -1,6 +1,8 @@
 #ifndef MAX6956_H
 #define MAX6956_H
 
+#include <libopencm3/stm32/i2c.h>
+
 void max6956_setup(void);
 void max6956_write_register(uint32_t i2c, uint8_t dev_addr, uint8_t reg_addr, uint8_t value);
 void max6956_set_led_brightness(uint32_t i2c, uint8_t dev_adr, uint8_t nr, uint8_t brightness);

@@ -5,6 +5,7 @@
 #include "encoder.h"
 #include "teensy.h"
 #include "usb.h"
+#include "max6956.h"
 #include "panel_rmp.h"
 
 #define ID_STROBE_LIGHT    0
@@ -60,42 +61,76 @@ uint8_t panel_rmp_switch(void);
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
 void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low_step, int32_t max, int32_t min, uint32_t id_act);
 void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t small_up, uint32_t small_down);
+void panel_set_led(void);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
+}
+
+
+void panel_set_led(void) {
+		switch(rmp_act) {
+		case RMP_VOR:
+				max6956_set_led(I2C2, 0x40, 18, 1);
+				break;
+		case RMP_ILS:
+				max6956_set_led(I2C2, 0x40, 17, 1);
+				break;
+		case RMP_ADF:
+				max6956_set_led(I2C2, 0x40, 29, 1);
+				break;
+		case RMP_BFO:
+				max6956_set_led(I2C2, 0x40, 28, 1);
+				break;
+		case RMP_COM1:
+				max6956_set_led(I2C2, 0x40, 15, 1);
+				break;
+		case RMP_COM2:
+				max6956_set_led(I2C2, 0x40, 23, 1);
+				break;
+		default:
+				;
+		}
 }
 
 uint8_t panel_rmp_switch(void) {
 	rmp_act_t new = RMP_OFF;
 	rmp_act_t last = rmp_act;
 
-	if (gpio_get_pos_event(SWITCH_VOR))
+	if (gpio_get_pos_event(SWITCH_VOR)) {
 		if (last == RMP_VOR)
 			new = RMP_VOR_CRS;
 		else
 			new = RMP_VOR;
-	else if (gpio_get_pos_event(SWITCH_ILS))
+	} else if (gpio_get_pos_event(SWITCH_ILS)) {
 		new = RMP_ILS;
-	else if (gpio_get_pos_event(SWITCH_VOR2)) {
+	} else if (gpio_get_pos_event(SWITCH_VOR2)) {
 		if (last == RMP_VOR2)
 			new = RMP_VOR2_CRS;
 		else
 			new = RMP_VOR2;
-	} else if (gpio_get_pos_event(SWITCH_ADF))
+	} else if (gpio_get_pos_event(SWITCH_ADF)) {
 		new = RMP_ADF;
-	else if (gpio_get_pos_event(SWITCH_BFO)) {
+	} else if (gpio_get_pos_event(SWITCH_BFO)) {
 		if (last == RMP_BFO)
 			new = RMP_BFO_ALT;
 		else
 			new = RMP_BFO;
-	} else if (gpio_get_pos_event(SWITCH_COM1))
+	} else if (gpio_get_pos_event(SWITCH_COM1)) {
 		new = RMP_COM1;
-	else if (gpio_get_pos_event(SWITCH_COM2))
+	} else if (gpio_get_pos_event(SWITCH_COM2)) {
 		new = RMP_COM2;
-	else
+	} else {
 		return 0; // No switch pressed
+	}
 
 	rmp_act = new;
+
+	if (new != last) {
+		max6956_clear_all_leds(I2C2, 0x40);
+		panel_set_led();
+	}
+
 	return new != last;
 }
 
