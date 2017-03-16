@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#configure kdbg
+# settings "global options ..."/"How to invoce gdb" to arm-none-eabi-gdb --fullname --nx" 
+openocd -f ../openocd.cfg &
+
+kdbg -r localhost:3333 xa320.elf
+kill $! # kill last job in background

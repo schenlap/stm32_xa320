@@ -12,10 +12,21 @@ For gpio wiring see gpio.c,
 for encoder wiring see encoder_exti.c
 for 7 segemnt display wiring see max7219.c.
 
-Building the code
+Building libopencm3 (only once)
 -----------------
 cd libopencm3
 make
+
+Building the code
+-----------------
+cd src
+make
+
+Debug
+-----
+cd src
+../tools/debug_kdbg
+
 
 Usage
 -----
