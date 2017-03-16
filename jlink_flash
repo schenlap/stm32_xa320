@@ -1,0 +1,13 @@
+#!/bin/sh
+echo dev $1
+echo speed $2
+echo bin $3
+cat <<EOF | JLinkExe 
+device ${1}
+speed ${2} 
+loadbin ${3} 0x0
+r
+g
+q
+EOF
+

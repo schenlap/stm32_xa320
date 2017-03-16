@@ -39,6 +39,9 @@ OBJCOPY		:= $(PREFIX)-objcopy
 OBJDUMP		:= $(PREFIX)-objdump
 GDB		:= $(PREFIX)-gdb
 STFLASH		= $(shell which st-flash)
+JLINK	= $(shell which JLinkExe)
+JLINK_SPEED = 1000
+JLINK_PROTO = SWD
 STYLECHECK	:= /checkpatch.pl
 STYLECHECKFLAGS	:= --no-tree -f --terse --mailback
 STYLECHECKFILES	:= $(shell find . -name '*.[ch]')
@@ -157,7 +160,7 @@ flash: $(BINARY).flash
 	@#printf "  LD      $(*).elf\n"
 	$(Q)$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $(*).elf
 
-%.o: %.c
+%.o: %.c 
 	@#printf "  CC      $(*).c\n"
 	$(Q)$(CC) $(CFLAGS) $(CPPFLAGS) $(ARCH_FLAGS) -o $(*).o -c $(*).c
 
@@ -172,6 +175,7 @@ flash: $(BINARY).flash
 clean:
 	@#printf "  CLEAN\n"
 	$(Q)$(RM) *.o *.d *.elf *.bin *.hex *.srec *.list *.map
+	$(Q)$(RM) ./lib/*.o ./lib/*.d
 
 stylecheck: $(STYLECHECKFILES:=.stylecheck)
 styleclean: $(STYLECHECKFILES:=.styleclean)
@@ -193,46 +197,57 @@ styleclean: $(STYLECHECKFILES:=.styleclean)
 	@printf "  FLASH  $<\n"
 	$(Q)$(STFLASH) write $(*).bin 0x8000000
 
-ifeq ($(STLINK_PORT),)
-ifeq ($(BMP_PORT),)
-ifeq ($(OOCD_SERIAL),)
-%.flash: %.hex
-	@printf "  FLASH   $<\n"
-	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
-	$(Q)$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
-		    -f board/$(OOCD_BOARD).cfg \
-		    -c "init" -c "reset init" \
-		    -c "flash write_image erase $(*).hex" \
-		    -c "reset" \
-		    -c "shutdown" $(NULL)
-else
-%.flash: %.hex
-	@printf "  FLASH   $<\n"
-	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
-	$(Q)$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
-		    -f board/$(OOCD_BOARD).cfg \
-		    -c "ft2232_serial $(OOCD_SERIAL)" \
-		    -c "init" -c "reset init" \
-		    -c "flash write_image erase $(*).hex" \
-		    -c "reset" \
-		    -c "shutdown" $(NULL)
-endif
-else
-%.flash: %.elf
-	@printf "  GDB   $(*).elf (flash)\n"
-	$(Q)$(GDB) --batch \
-		   -ex 'target extended-remote $(BMP_PORT)' \
-		   -x $(SCRIPT_DIR)/black_magic_probe_flash.scr \
-		   $(*).elf
-endif
-else
-%.flash: %.elf
-	@printf "  GDB   $(*).elf (flash)\n"
-	$(Q)$(GDB) --batch \
-		   -ex 'target extended-remote $(STLINK_PORT)' \
-		   -x $(SCRIPT_DIR)/stlink_flash.scr \
-		   $(*).elf
-endif
+%.jlink-flash: %.bin
+	@printf " Flashing $< via JLink to $(DEVICE)\n"
+	$(CURDIR)/../jlink_flash $(DEVICE) $(JLINK_SPEED) $<
+
+#ifeq ($(STLINK_PORT),)
+#ifeq ($(BMP_PORT),)
+#ifeq ($(OOCD_SERIAL),)
+#ifeq ($(JLINK_EXE),)
+#%.flash: %.hex
+#	@printf "  FLASH   $<\n"
+#	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
+#	$(Q)$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
+#		    -f board/$(OOCD_BOARD).cfg \
+#		    -c "init" -c "reset init" \
+#		    -c "flash write_image erase $(*).hex" \
+#		    -c "reset" \
+#		    -c "shutdown" $(NULL)
+#else
+#%.flash: %.hex
+#	@printf "  FLASH   $<\n"
+#	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
+#	$(Q)$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
+#		    -f board/$(OOCD_BOARD).cfg \
+#		    -c "ft2232_serial $(OOCD_SERIAL)" \
+#		    -c "init" -c "reset init" \
+#		    -c "flash write_image erase $(*).hex" \
+#		    -c "reset" \
+#		    -c "shutdown" $(NULL)
+#endif
+#else
+#%.flash: %.elf
+#	@printf "  GDB   $(*).elf (flash)\n"
+#	$(Q)$(GDB) --batch \
+#		   -ex 'target extended-remote $(BMP_PORT)' \
+#		   -x $(SCRIPT_DIR)/black_magic_probe_flash.scr \
+#		   $(*).elf
+#endif
+#else
+#%.flash: %.elf
+#	@printf "  GDB   $(*).elf (flash)\n"
+#	$(Q)$(GDB) --batch \
+#		   -ex 'target extended-remote $(STLINK_PORT)' \
+#		   -x $(SCRIPT_DIR)/stlink_flash.scr \
+#		   $(*).elf
+#endif
+#else
+%.flash: %.bin
+	@printf "Flashing via JlinkExe $(*).bin (flash)\n"
+	$(CURDIR)/../jlink_flash $(DEVICE) $(JLINK_SPEED) $<
+#endif
+
 
 .PHONY: images clean stylecheck styleclean elf bin hex srec list
 
