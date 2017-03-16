@@ -84,7 +84,7 @@ void max6956_set_led_brightness(uint32_t i2c, uint8_t dev_adr, uint8_t nr, uint8
 
 	if (nr < 4)
 		return;
-	if (nr > 16)
+	if (nr > 31)
 		return;
 
 	nr = nr - 4;
@@ -115,7 +115,7 @@ void max6956_set_led(uint32_t i2c, uint8_t dev_adr, uint8_t nr, uint8_t on)
 {
 	if (nr < 4)
 		return;
-	if (nr > 16)
+	if (nr > 31)
 		return;
 
 	max6956_write_register(i2c, dev_adr, 0x20 + nr, !!on);
@@ -161,13 +161,13 @@ void max6956_setup(void)
 
 	/* reset all ports */
 	for (i = 0x12; i <= 0x1f; i++)
-		max6956_write_register(I2C2, 0x40, i, 0x00);
+		max6956_write_register(I2C2, 0x40, i, 0x8);
 
 	max6956_write_register(I2C2, 0x40, 0x04, 0x41); // normal op, individual current (brightness)
 
 	for (i = 0x09; i <= 0x0f; i++)
 		max6956_write_register(I2C2, 0x40, i, 0x00); // led output
 
-	max6956_set_led_brightness(I2C2, 0x40, 4, 2); // Test Led4, low brighness
-	max6956_set_led(I2C2, 0x40, 4, 1); // Test Led4 on
+	//max6956_set_led_brightness(I2C2, 0x40, 4, 2); // Test Led4, low brighness
+	max6956_set_led(I2C2, 0x40, 21, 1); // Test Led21 on
 }
