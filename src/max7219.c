@@ -187,7 +187,7 @@ void max7219_ClearAll (void)
 void max7219_Clear(uint8_t daisy_nr)
 {
   char i;
-  for (i=0; i < 8; i++)
+  for (i=1; i <= 8; i++)
     max7219_DisplayChar(i + 8 * (daisy_nr - 1), ' ');                           // turn all segments off
 }
 
@@ -204,30 +204,31 @@ void max7219_Clear(uint8_t daisy_nr)
 */
 void max7219_DisplayChar (uint8_t digit, char character)
 {
-	uint8_t nr = 1;
+	uint8_t nr = max7219_cnt;
 
-	if (digit >= 8) {
+	if (digit > 8) {
 		digit -= 8;
-		nr ++;
+		nr --;
 	}
 
-	max7219_Write(nr, 8-digit, max7219_LookupCode(character));
+	max7219_Write(nr, digit, max7219_LookupCode(character));
 }
 
 // Display char with data point
 void max7219_DisplayCharDp (uint8_t digit, char character, uint8_t dp)
 {
-	uint8_t nr = 1;
+	uint8_t nr = max7219_cnt;
+	digit++; // begin from 0
 
-	if (digit >= 8) {
+	if (digit > 8) {
 		digit -= 8;
-		nr ++;
+		nr --;
 	}
 
 	if (dp)
-		max7219_Write(nr, 8-digit, max7219_LookupCode(character) | 0x80);
+		max7219_Write(nr, digit, max7219_LookupCode(character) | 0x80);
 	else
-		max7219_Write(nr, 8-digit, max7219_LookupCode(character));
+		max7219_Write(nr, digit, max7219_LookupCode(character));
 }
 
 void max7219_display_string(uint8_t offset, char *str)
