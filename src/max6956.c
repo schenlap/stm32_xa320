@@ -130,7 +130,7 @@ void max6956_clear_led(uint32_t i2c, uint8_t dev_adr, uint8_t nr)
 
 void max6956_standby(uint32_t i2c, uint8_t dev_adr, uint8_t stdby)
 {
-	max6956_write_register(i2c, dev_adr, 0x04, !!stdby);
+	max6956_write_register(i2c, dev_adr, 0x04, !stdby);
 }
 
 

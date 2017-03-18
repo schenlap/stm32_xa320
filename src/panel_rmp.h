@@ -3,6 +3,7 @@
 
 void panel_rmp_setup_datarefs(void);
 void task_panel_rmp(void);
+void panel_rmp_setup(void);
 
 typedef enum {
 	RMP_OFF = 0,

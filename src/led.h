@@ -22,5 +22,6 @@
 
 void led_set(uint32_t pin, uint32_t state);
 void led_clear(uint32_t pin);
+void led_standby(uint8_t state); // temp disable all leds
 
 #endif // LED_H

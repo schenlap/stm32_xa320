@@ -10,7 +10,8 @@
 #include "gpio.h"
 #include "max7219.h"
 #include "encoder.h"
-#include "max6956.h"
+#include "led.h"
+#include "max6956.h" // max6956_setup()
 #include "usb.h"
 #include "teensy.h"
 #include "panel_rmp.h"
@@ -71,12 +72,15 @@ void task_display(void) {
 			max7219_display_string(0, "V1");
 		break;
 		case RMP_VOR_CRS:
-			freq = panel_rmp_get_nav1_crs();
-			if (!disp_in_newdata(freq, 0, act))
+			freq = panel_rmp_get_nav1_freq();
+			freq_stdby = panel_rmp_get_nav1_crs();
+			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
+			snprintf(str, 7, " C-%03d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V1");
 		break;
 		case RMP_ADF:
@@ -102,12 +106,15 @@ void task_display(void) {
 			max7219_display_string(0, "V2");
 		break;
 		case RMP_VOR2_CRS:
-			freq = panel_rmp_get_nav2_crs();
-			if (!disp_in_newdata(freq, 0, act))
+			freq = panel_rmp_get_nav2_freq();
+			freq_stdby = panel_rmp_get_nav2_crs();
+			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
+			snprintf(str, 7, " C-%03d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 99);
+			snprintf(str, 8, "%5d", (int)freq);
+			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V2");
 		break;
 		case RMP_COM1:
@@ -170,6 +177,7 @@ void task_switches(void) {
 	panel_rmp_set_avionics_power(on);
 	if (on != on_last) {
 		on_last = on;
+		led_standby(!on);
 	}
 }
 
@@ -194,6 +202,8 @@ int main(void)
 	gpio_set_led(LED6, 0);
 
 	max6956_setup();
+
+	panel_rmp_setup();
 
 	//task_create(task_encoder, 2);
 	task_create(task_panel_rmp, 10);

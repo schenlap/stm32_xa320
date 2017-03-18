@@ -34,8 +34,8 @@ static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req
 					if(req->wValue==0x2200){
 						*buf = (uint8_t *)hid_report_descriptor;
 						*len = sizeof(hid_report_descriptor);
-                        if(usb_ready==0)
-								usb_ready=1;
+							//if(usb_ready==0)
+							//	usb_ready=1;
 						return 1;
 					}else if(req->wValue==0x2100){
 						*buf = (uint8_t *)USBD_HID_Desc;

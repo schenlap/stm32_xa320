@@ -52,3 +52,8 @@ void led_set(uint32_t pin, uint32_t state) {
 void led_clear(uint32_t pin) {
 	led_set(pin, 0);
 }
+
+
+void led_standby(uint8_t state) {
+	max6956_standby(I2C2, 0x40, state);
+}

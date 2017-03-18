@@ -76,6 +76,8 @@ void panel_set_led(void) {
 		case RMP_VOR_CRS:
 				led_set(LED_VOR, 1);
 				break;
+		case RMP_VOR2:
+		case RMP_VOR2_CRS:
 		case RMP_ILS:
 				led_set(LED_ILS, 1);
 				break;
@@ -97,6 +99,7 @@ void panel_set_led(void) {
 		}
 }
 
+
 uint8_t panel_get_associated_led(uint8_t page) {
 	switch(page) {
 			case RMP_COM1:
@@ -107,10 +110,9 @@ uint8_t panel_get_associated_led(uint8_t page) {
 			case RMP_VOR_CRS:
 					return LED_VOR;
 			case RMP_ILS:
-					return LED_ILS;
 			case RMP_VOR2: /* MLS */
 			case RMP_VOR2_CRS: /* MLS */
-					return LED_MLS;
+					return LED_ILS;
 			case RMP_ADF:
 					return LED_ADF;
 			case RMP_BFO: /* Autopilot heading */
@@ -120,6 +122,7 @@ uint8_t panel_get_associated_led(uint8_t page) {
 					return -1;
 	}
 }
+
 
 uint8_t panel_rmp_switch(void) {
 	rmp_act_t new = RMP_OFF;
@@ -131,9 +134,9 @@ uint8_t panel_rmp_switch(void) {
 			new = RMP_VOR_CRS;
 		else
 			new = RMP_VOR;
-	} else if (gpio_get_pos_event(SWITCH_ILS)) {
-		new = RMP_ILS;
-	} else if (gpio_get_pos_event(SWITCH_VOR2)) {
+	/*} else if (gpio_get_pos_event(SWITCH_ILS)) {
+		new = RMP_ILS; */
+	} else if (/*gpio_get_pos_event(SWITCH_VOR2) ||*/ gpio_get_pos_event(SWITCH_ILS)) { // VOR2 = MLS is short circuit to ADF
 		if (last == RMP_VOR2)
 			new = RMP_VOR2_CRS;
 		else
@@ -152,6 +155,7 @@ uint8_t panel_rmp_switch(void) {
 	} else if (gpio_get_pos_event(SWITCH_NAV)) {
 			usb_ready = 1;
 			led_set(LED_SEL, 1);
+			return 0; // nothing to do here
 	} else {
 		return 0; // No switch pressed
 	}
@@ -549,4 +553,11 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				//avionics_power_on = data;
 				break;
 	}
+}
+
+
+void panel_rmp_setup(void)
+{
+	rmp_act = RMP_VOR;
+	led_set(LED_VOR, 1);
 }
