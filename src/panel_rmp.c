@@ -143,7 +143,8 @@ uint8_t panel_rmp_switch(void) {
 			new = RMP_VOR2;
 	} else if (gpio_get_pos_event(SWITCH_ADF)) {
 		new = RMP_ADF;
-	} else if (gpio_get_pos_event(SWITCH_BFO)) {
+	} else if (gpio_get_pos_event(SWITCH_BFO) ||
+			  ((last == RMP_BFO || last == RMP_BFO_ALT) && gpio_get_pos_event(SWITCH_SW_STBY))) {
 		if (last == RMP_BFO)
 			new = RMP_BFO_ALT;
 		else
@@ -194,7 +195,7 @@ void task_panel_rmp(void) {
 			break;
 			case RMP_VOR_CRS:
 				panel_rmp_general_single_float(&nav1_crs,
-				                  100,
+				                  30,
 				                  1,
 				                  359,
 				                  0,
@@ -217,7 +218,7 @@ void task_panel_rmp(void) {
 			break;
 			case RMP_VOR2_CRS:
 				panel_rmp_general_single_float(&nav2_crs,
-				                  100,
+				                  30,
 				                  1,
 				                  359,
 				                  0,
@@ -251,7 +252,7 @@ void task_panel_rmp(void) {
 			break;
 			case RMP_BFO:
 				panel_rmp_general_single_float(&autop_heading,
-				                  100,
+				                  30,
 				                  1,
 				                  359,
 				                  0,
@@ -259,7 +260,7 @@ void task_panel_rmp(void) {
 			break;
 			case RMP_BFO_ALT:
 				panel_rmp_general_single_float(&autop_alt,
-				                  100,
+				                  500,
 				                  10,
 				                  90000,
 				                  0,

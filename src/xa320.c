@@ -51,12 +51,18 @@ uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act) {
 void task_display(void) {
 	char str[8];
 	rmp_act_t act =  panel_rmp_get_active();
+	static rmp_act_t act_last = RMP_OFF;
 	uint32_t freq, freq_stdby;
 
 	if (gpio_get_state(SWITCH_RMP_OFF)) {
 		disp_in_newdata(-1, -1, RMP_OFF);
 		max7219_ClearAll();
 		return;	
+	}
+
+	if (act != act_last) {
+		act_last = act;
+		max7219_ClearAll();
 	}
 
 	switch(act) {
@@ -140,21 +146,27 @@ void task_display(void) {
 			max7219_display_string(0, "C2");
 		break;
 		case RMP_BFO:
-			freq = panel_rmp_get_autop_heading();
-			if (!disp_in_newdata(freq, 0, act))
+			freq_stdby = panel_rmp_get_autop_heading();
+			freq = panel_rmp_get_autop_alt();
+			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
+			snprintf(str, 7, " C-%03d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 99);
+			snprintf(str, 8, "A%5d", (int)freq);
+			max7219_display_string_fixpoint(2, str, 99);
 			max7219_display_string(0, "AH");
 		break;
 		case RMP_BFO_ALT:
-			freq = panel_rmp_get_autop_alt();
-			if (!disp_in_newdata(freq, 0, act))
+			freq_stdby = panel_rmp_get_autop_alt();
+			freq = panel_rmp_get_autop_heading();
+			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
+			snprintf(str, 8, "%5d", (int)freq_stdby);
 			max7219_display_string_fixpoint(8, str, 99);
+			snprintf(str, 7, " C-%03d", (int)freq);
+			max7219_display_string_fixpoint(2, str, 99);
 			max7219_display_string(0, "AA");
 		break;
 		default:
