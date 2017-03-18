@@ -128,12 +128,19 @@ void max6956_clear_led(uint32_t i2c, uint8_t dev_adr, uint8_t nr)
 }
 
 
+void max6956_standby(uint32_t i2c, uint8_t dev_adr, uint8_t stdby)
+{
+	max6956_write_register(i2c, dev_adr, 0x04, !!stdby);
+}
+
+
 void max6956_clear_all_leds(uint32_t i2c, uint8_t dev_adr)
 {
-	int i;
-
-	for (i = 4; i < 31; i++)
-		max6956_clear_led(i2c, dev_adr, i);
+	// reset all outputs
+	max6956_write_register(i2c, dev_adr, 0x44, 0x00); // p4-11 = off
+	max6956_write_register(i2c, dev_adr, 0x4c, 0x00); // p12-19 = off
+	max6956_write_register(i2c, dev_adr, 0x54, 0x00); // p20-27 = off
+	max6956_write_register(i2c, dev_adr, 0x5c, 0x00); // p28-31 = off
 }
 
 
@@ -159,15 +166,21 @@ void max6956_setup(void)
 	//addressing mode
 	i2c_peripheral_enable(I2C2);
 
-	/* reset all ports */
+	/* set brightness for all ports */
 	for (i = 0x12; i <= 0x1f; i++)
-		max6956_write_register(I2C2, 0x40, i, 0x8);
+		max6956_write_register(I2C2, 0x40, i, 0x88);
 
 	max6956_write_register(I2C2, 0x40, 0x04, 0x41); // normal op, individual current (brightness)
 
 	for (i = 0x09; i <= 0x0f; i++)
 		max6956_write_register(I2C2, 0x40, i, 0x00); // led output
 
+	
+	max6956_clear_all_leds(I2C2, 0x40);
+
 	//max6956_set_led_brightness(I2C2, 0x40, 4, 2); // Test Led4, low brighness
-	max6956_set_led(I2C2, 0x40, 21, 1); // Test Led21 on
+	//max6956_set_led(I2C2, 0x40, 21, 1); // Test Led21 on vhf1 low
+	//max6956_set_led(I2C2, 0x40, 22, 1); // Test Led21 on vhf3 high bfo
+	//max6956_set_led(I2C2, 0x40, 23, 1); // Test Led21 on hf2 low
+	//max6956_set_led(I2C2, 0x40, 24, 1); // Test Led21 on am high
 }

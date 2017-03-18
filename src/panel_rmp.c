@@ -5,7 +5,7 @@
 #include "encoder.h"
 #include "teensy.h"
 #include "usb.h"
-#include "max6956.h"
+#include "led.h"
 #include "panel_rmp.h"
 
 #define ID_STROBE_LIGHT    0
@@ -63,6 +63,8 @@ void panel_rmp_general_single_float(int32_t *act, int32_t high_step, int32_t low
 void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t small_up, uint32_t small_down);
 void panel_set_led(void);
 
+uint8_t panel_get_associated_led(uint8_t page);
+
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
 }
@@ -71,31 +73,58 @@ rmp_act_t panel_rmp_get_active(void) {
 void panel_set_led(void) {
 		switch(rmp_act) {
 		case RMP_VOR:
-				max6956_set_led(I2C2, 0x40, 18, 1);
+		case RMP_VOR_CRS:
+				led_set(LED_VOR, 1);
 				break;
 		case RMP_ILS:
-				max6956_set_led(I2C2, 0x40, 17, 1);
+				led_set(LED_ILS, 1);
 				break;
 		case RMP_ADF:
-				max6956_set_led(I2C2, 0x40, 29, 1);
+				led_set(LED_ADF, 1);
 				break;
 		case RMP_BFO:
-				max6956_set_led(I2C2, 0x40, 28, 1);
+		case RMP_BFO_ALT:
+				led_set(LED_BFO, 1);
 				break;
 		case RMP_COM1:
-				max6956_set_led(I2C2, 0x40, 15, 1);
+				led_set(LED_HF1, 1);
 				break;
 		case RMP_COM2:
-				max6956_set_led(I2C2, 0x40, 23, 1);
+				led_set(LED_HF2, 1);
 				break;
 		default:
 				;
 		}
 }
 
+uint8_t panel_get_associated_led(uint8_t page) {
+	switch(page) {
+			case RMP_COM1:
+					return LED_HF1;
+			case RMP_COM2:
+					return LED_HF2;
+			case RMP_VOR:
+			case RMP_VOR_CRS:
+					return LED_VOR;
+			case RMP_ILS:
+					return LED_ILS;
+			case RMP_VOR2: /* MLS */
+			case RMP_VOR2_CRS: /* MLS */
+					return LED_MLS;
+			case RMP_ADF:
+					return LED_ADF;
+			case RMP_BFO: /* Autopilot heading */
+			case RMP_BFO_ALT: /* Autopilot height */
+					return LED_BFO;
+			default:
+					return -1;
+	}
+}
+
 uint8_t panel_rmp_switch(void) {
 	rmp_act_t new = RMP_OFF;
 	rmp_act_t last = rmp_act;
+	uint8_t lednr;
 
 	if (gpio_get_pos_event(SWITCH_VOR)) {
 		if (last == RMP_VOR)
@@ -120,14 +149,19 @@ uint8_t panel_rmp_switch(void) {
 		new = RMP_COM1;
 	} else if (gpio_get_pos_event(SWITCH_COM2)) {
 		new = RMP_COM2;
+	} else if (gpio_get_pos_event(SWITCH_NAV)) {
+			usb_ready = 1;
+			led_set(LED_SEL, 1);
 	} else {
 		return 0; // No switch pressed
 	}
 
 	rmp_act = new;
+	lednr = panel_get_associated_led(last);
 
 	if (new != last) {
-		max6956_clear_all_leds(I2C2, 0x40);
+		if (lednr > 0)
+				led_clear(lednr);
 		panel_set_led();
 	}
 
