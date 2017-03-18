@@ -70,11 +70,15 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 
 usbd_device *my_usb_device;
 
+/* TODO: IRQ is locked during send, so timeout does not work */
 void usb_send_packet(const void *buf, int len){
 	uint32_t timeout = systime_get() + 15; // wait max 15 milli sec
+	uint32_t timeout_cnt = 0;
 
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
 			if (systime_get() > timeout)
+					break;
+			if (timeout_cnt++ > 1000)
 					break;
 	}
 }
