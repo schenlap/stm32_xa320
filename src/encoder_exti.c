@@ -25,8 +25,8 @@ typedef struct {
 } enc_priv_t;
 
 enc_defs enc_desc[] = {
-		{ENC_A, GPIOD, GPIO8, GPIO10, NVIC_EXTI9_5_IRQ, NVIC_EXTI15_10_IRQ},
-		{ENC_B, GPIOB, GPIO13, GPIO15, NVIC_EXTI15_10_IRQ, NVIC_EXTI15_10_IRQ}
+		{ENC_B, GPIOB, GPIO13, GPIO15, NVIC_EXTI15_10_IRQ, NVIC_EXTI15_10_IRQ},
+		{ENC_A, GPIOD, GPIO8, GPIO10, NVIC_EXTI9_5_IRQ, NVIC_EXTI15_10_IRQ}
 };
 
 enc_priv_t enc_priv[ENC_CNT];
@@ -137,6 +137,7 @@ void encoder_setup(void)
 	int i;
 	enc_defs *p = enc_desc;
 	rcc_periph_clock_enable(RCC_GPIOD); // Leds, Encoder
+	rcc_periph_clock_enable(RCC_GPIOB); // Leds, Encoder
 	RCC_APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
 	for (i = 0; i < (int)(sizeof(enc_desc) / sizeof(enc_defs)); i++, p++) {
