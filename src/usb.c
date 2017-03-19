@@ -34,8 +34,8 @@ static int hid_control_request(usbd_device *usbd_dev, struct usb_setup_data *req
 					if(req->wValue==0x2200){
 						*buf = (uint8_t *)hid_report_descriptor;
 						*len = sizeof(hid_report_descriptor);
-							//if(usb_ready==0)
-							//	usb_ready=1;
+							if(usb_ready==0)
+								usb_ready=1;
 						return 1;
 					}else if(req->wValue==0x2100){
 						*buf = (uint8_t *)USBD_HID_Desc;
@@ -71,16 +71,17 @@ static void hid_set_config(usbd_device *usbd_dev, uint16_t wValue)
 usbd_device *my_usb_device;
 
 /* TODO: IRQ is locked during send, so timeout does not work */
-void usb_send_packet(const void *buf, int len){
+int usb_send_packet(const void *buf, int len){
 	uint32_t timeout = systime_get() + 15; // wait max 15 milli sec
 	uint32_t timeout_cnt = 0;
 
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
 			if (systime_get() > timeout)
-					break;
-			if (timeout_cnt++ > 1000)
-					break;
+					return -1;
+			if (timeout_cnt++ > 500000)
+					return -1;
 	}
+	return 0;
 }
 
 void usb_setup(void)

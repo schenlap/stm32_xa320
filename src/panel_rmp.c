@@ -8,27 +8,28 @@
 #include "led.h"
 #include "panel_rmp.h"
 
-#define ID_STROBE_LIGHT    0
-#define ID_NAV_LIGHT       1
-#define ID_NAV1_FREQ       2
-#define ID_NAV1_STDBY_FREQ 3
-#define ID_NAV1_CRS        4
-#define ID_NDB_FREQ        5
-#define ID_NDB_STDBY_FREQ  6
-#define ID_NAV2_FREQ       7
-#define ID_NAV2_STDBY_FREQ 8
-#define ID_NAV2_CRS        9
-#define ID_COM1_FREQ       10
-#define ID_COM1_STDBY_FREQ 11
-#define ID_COM2_FREQ       12
-#define ID_COM2_STDBY_FREQ 13
-#define ID_AVIONICS_POWER  14
-#define ID_AUTOP_HEADING   15
-#define ID_AUTOP_ALT       16
-#define ID_COM1_LARGE_UP   17
-#define ID_COM1_LARGE_DOWN 18
-#define ID_COM1_SMALL_UP   19
-#define ID_COM1_SMALL_DOWN 20
+#define ID_AIRCRAFT_TYPE   0
+#define ID_STROBE_LIGHT    1
+#define ID_NAV_LIGHT       2
+#define ID_NAV1_FREQ       3
+#define ID_NAV1_STDBY_FREQ 4
+#define ID_NAV1_CRS        5
+#define ID_NDB_FREQ        6
+#define ID_NDB_STDBY_FREQ  7
+#define ID_NAV2_FREQ       8
+#define ID_NAV2_STDBY_FREQ 9
+#define ID_NAV2_CRS        10
+#define ID_COM1_FREQ       11
+#define ID_COM1_STDBY_FREQ 12
+#define ID_COM2_FREQ       13
+#define ID_COM2_STDBY_FREQ 14
+#define ID_AVIONICS_POWER  15
+#define ID_AUTOP_HEADING   16
+#define ID_AUTOP_ALT       17
+#define ID_COM1_LARGE_UP   18
+#define ID_COM1_LARGE_DOWN 19
+#define ID_COM1_SMALL_UP   20
+#define ID_COM1_SMALL_DOWN 21
 
 static uint8_t is_init = 0;
 rmp_act_t rmp_act = RMP_VOR;
@@ -56,6 +57,7 @@ int32_t autop_heading = 90;
 int32_t autop_alt = 2000;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
+void panel_rmp_connect_cb(uint8_t id, uint32_t data);
 void panel_rmp_ndb(void);
 uint8_t panel_rmp_switch(void);
 void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uint32_t high_step, uint32_t low_step, uint32_t max, uint32_t min, uint32_t id_stdby, uint32_t id_act);
@@ -64,6 +66,7 @@ void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t s
 void panel_set_led(void);
 
 uint8_t panel_get_associated_led(uint8_t page);
+int panel_rmp_setup_datarefs_connect(void);
 
 rmp_act_t panel_rmp_get_active(void) {
 	return rmp_act;
@@ -154,7 +157,6 @@ uint8_t panel_rmp_switch(void) {
 	} else if (gpio_get_pos_event(SWITCH_COM2)) {
 		new = RMP_COM2;
 	} else if (gpio_get_pos_event(SWITCH_NAV)) {
-			usb_ready = 1;
 			led_set(LED_SEL, 1);
 			return 0; // nothing to do here
 	} else {
@@ -174,8 +176,8 @@ uint8_t panel_rmp_switch(void) {
 }
 
 void task_panel_rmp(void) {
-	static uint32_t init_cnt = 0;
 	static uint32_t cnt = 0;
+	static uint32_t xplane_ready = 0;
 
 	panel_rmp_switch();
 
@@ -272,27 +274,38 @@ void task_panel_rmp(void) {
 
 	if (!usb_ready)
 		return;
+	gpio_set_led(LED6, 0);
 
-	if (init_cnt && (init_cnt < 50)) {
-		if (init_cnt == 48) {
-			if (!is_init) {
-				panel_rmp_setup_datarefs();
-				is_init = 1;
-			}
+	if (!xplane_ready) {
+		panel_rmp_setup_datarefs_connect(); // fill buffer
+		if (!xplane_ready && panel_rmp_setup_datarefs_connect() == 0) {
+				xplane_ready = 1;
 		}
-		init_cnt++;
 	}
 
-	if ((!init_cnt) && (systime_get() - teensy_get_last_request_time() < 500)) {
-		gpio_set_led(LED6,0);
-		init_cnt = 1;
+	if (!xplane_ready) {
+		gpio_set_led(LED5, 0);
+			return;
+	}
+	gpio_set_led(LED5, 1);
+
+	if (!is_init) {
+		uint32_t timeout;
+		/* wait 100ms until teensy plugin is ready */
+		timeout = systime_get() + 100;
+		while(systime_get() < timeout)
+			;
+		panel_rmp_setup_datarefs();
+		is_init = 1;
 	}
 
-	if (init_cnt && systime_get() - teensy_get_last_request_time() < 500) {
-		gpio_set_led(LED6, 1);
+	if (systime_get() - teensy_get_last_request_time() < 500) {
+		//gpio_set_led(LED6, 1);
 	} else {
 		if (cnt++ > 5) {
-			gpio_toggle_led(LED6);
+			/* connection lost, try to reconnect */
+			xplane_ready = 0;
+			is_init = 0;
 			cnt = 0;
 		}
 	}
@@ -344,7 +357,7 @@ void panel_rmp_general(uint32_t *stdby, uint32_t *act, uint16_t comma_value, uin
 		if (tmp >= comma_value) tmp = 0;
 
 		*stdby = hv * comma_value + tmp;
-		if (*stdby > max) nav1_stdby_freq = max;
+		if (*stdby > max) *stdby = max;
 
 		teensy_send_int(id_stdby, *stdby);
 	}
@@ -476,7 +489,18 @@ uint32_t panel_rmp_get_autop_alt(void) {
 	return autop_alt;
 }
 
+/* try to register dataref to see ix X-Plane is started and ready
+ * return: 0 .. ok, <0 .. error (X-PLane not ready)
+ */
+int panel_rmp_setup_datarefs_connect(void) {
+		int ret;
+
+		ret = teensy_register_dataref(ID_AIRCRAFT_TYPE, "sim/aircraft/view/acf_ICAO", 1, &panel_rmp_connect_cb);
+		return ret;
+}
+
 void panel_rmp_setup_datarefs(void) {
+		teensy_register_dataref(ID_AIRCRAFT_TYPE, "sim/aircraft/view/acf_ICAO", 1, &panel_rmp_connect_cb);
 		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_FREQ, "sim/cockpit2/radios/actuators/nav1_frequency_hz", 1, &panel_rmp_cb);
@@ -506,10 +530,17 @@ void panel_rmp_setup_datarefs(void) {
 
 }
 
+
+void panel_rmp_connect_cb(uint8_t id, uint32_t data) {
+		id = id;
+		data = data;
+}
+
+
 void panel_rmp_cb(uint8_t id, uint32_t data) {
 	switch(id) {
 		case ID_STROBE_LIGHT:
-				gpio_set_led(LED5, !!data);
+				//gpio_set_led(LED5, !!data);
 				break;
 		case ID_NAV_LIGHT:
 				//gpio_set_led(LED4, !!data);
@@ -561,4 +592,6 @@ void panel_rmp_setup(void)
 {
 	rmp_act = RMP_VOR;
 	led_set(LED_VOR, 1);
+	gpio_set_led(LED5, 0);
+	gpio_set_led(LED6, 1);
 }

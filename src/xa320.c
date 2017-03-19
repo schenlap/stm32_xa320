@@ -195,6 +195,11 @@ void task_switches(void) {
 
 int main(void)
 {
+	#if 0
+	int debug = 0;
+	while (!debug)
+			;
+	#endif
 	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
 
 	rcc_periph_clock_enable(RCC_GPIOA);

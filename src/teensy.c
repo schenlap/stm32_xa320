@@ -24,11 +24,14 @@ uint32_t teensy_get_last_request_time(void) {
 
 /*
  * type: 0 .. command, 1 .. integer, 2 .. float
+ * return: 0 .. ok, <0 .. usb error (X-Plane not started)
  */
-uint8_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*cb)(uint8_t, uint32_t))
+int32_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*cb)(uint8_t, uint32_t))
 {
+	int ret;
+
 	if (ident >= MAX_IDS)
-		return 0;
+		return -2;
 	datids[ident].cb = cb;
 	uint8_t len = strlen(str);
 
@@ -42,9 +45,9 @@ uint8_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*c
 	buf[len + 6] = 0; // len of next command
 	
 	lock_irq();
-	usb_send_packet(buf, 64);
+	ret = usb_send_packet(buf, 64);
 	unlock_irq();
-	return ident;
+	return ret;
 }
 
 void teensy_send_int(uint16_t id, uint32_t d) {

@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <libopencm3/stm32/rcc.h>
 
-#define LED5_PIN GPIO4 // red
+#define LED5_PIN GPIO4 // green
 #define LED5_PORT GPIOC
-#define LED6_PIN GPIO5 // blue
+#define LED6_PIN GPIO5 // red
 #define LED6_PORT GPIOC
 
 #define LED5 LED5_PIN

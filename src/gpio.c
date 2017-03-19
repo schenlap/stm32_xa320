@@ -67,7 +67,7 @@ gpio_t pin_ins[] = {
 gpio_priv_t pin_ins_priv[PIN_IN_CNT];
 
 void gpio_set_led(uint32_t pin, uint32_t state) {
-	if (state)
+	if (!state)
 		gpio_set(LED5_PORT, pin);
 	else
 		gpio_clear(LED5_PORT, pin);

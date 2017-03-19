@@ -14,7 +14,7 @@
 
 void usb_setup(void);
 void send_test(void);
-void usb_send_packet(const void *buf, int len);
+int usb_send_packet(const void *buf, int len);
 void usb_poll(void);
 
 uint32_t usb_get_last_request_time(void);
