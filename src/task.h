@@ -17,8 +17,11 @@ void task_start(void);
 
 void task_time_increment(void);
 
-void lock_irq(void);
+//void lock_irq(void);
+uint32_t lock_irq_low(void);
 
 void unlock_irq(void);
 
+#define IRQ_PRI_LOW 0x20
+#define IRQ_PRI_HIGH 0x10 // never locked
 #endif

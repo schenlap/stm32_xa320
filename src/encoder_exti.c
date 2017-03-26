@@ -5,6 +5,7 @@
 
 #include "gpio.h"
 #include "systime.h"
+#include "task.h"
 #include "encoder.h"
 
 typedef struct {
@@ -141,7 +142,9 @@ void encoder_setup(void)
 	RCC_APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
 	for (i = 0; i < (int)(sizeof(enc_desc) / sizeof(enc_defs)); i++, p++) {
+		nvic_set_priority(p->nvic_a, IRQ_PRI_LOW);
 		nvic_enable_irq(p->nvic_a);
+		nvic_set_priority(p->nvic_b, IRQ_PRI_LOW);
 		nvic_enable_irq(p->nvic_b);
 
 		gpio_mode_setup(p->port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP,

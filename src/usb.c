@@ -2,6 +2,7 @@
 #include "gpio.h"
 #include "usb.h"
 #include "usb_descriptors.h"
+#include "task.h"
 #include "teensy.h" // TODO add register callback funtion and remove header here
 
 /* Buffer to be used for control requests. */
@@ -73,13 +74,10 @@ usbd_device *my_usb_device;
 /* TODO: IRQ is locked during send, so timeout does not work */
 int usb_send_packet(const void *buf, int len){
 	uint32_t timeout = systime_get() + 15; // wait max 15 milli sec
-	uint32_t timeout_cnt = 0;
 
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
-			if (systime_get() > timeout)
-					return -1;
-			if (timeout_cnt++ > 500000)
-					return -1;
+		if (systime_get() > timeout)
+			return -1;
 	}
 	return 0;
 }
@@ -97,6 +95,7 @@ void usb_setup(void)
 	my_usb_device = usbd_init(&otgfs_usb_driver, &dev, &config, usb_strings, 3, usbd_control_buffer, sizeof(usbd_control_buffer));
 	usbd_register_set_config_callback(my_usb_device, hid_set_config);
 
+	nvic_set_priority(NVIC_OTG_FS_IRQ, IRQ_PRI_LOW);
 	nvic_enable_irq(NVIC_OTG_FS_IRQ);
 }
 

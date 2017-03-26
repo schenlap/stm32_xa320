@@ -44,7 +44,7 @@ int32_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*c
 	strncpy((char *)&buf[6], (char *)str, 64 - 5);
 	buf[len + 6] = 0; // len of next command
 	
-	lock_irq();
+	lock_irq_low();
 	ret = usb_send_packet(buf, 64);
 	unlock_irq();
 	return ret;
@@ -66,7 +66,7 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	buf[9] = (uint8_t) (d >> 24);
 	buf[10] = 0; // len of next command
 
-	lock_irq();
+	lock_irq_low();
 	usb_send_packet(buf, 64);
 	unlock_irq();
 }
@@ -81,7 +81,7 @@ void teensy_send_command_once(uint16_t id) {
 	buf[3] = (uint8_t)(id >> 8);
 	buf[4] = 0; // len of next command
 
-	lock_irq();
+	lock_irq_low();
 	usb_send_packet(buf, 64);
 	unlock_irq();
 }
@@ -107,7 +107,7 @@ void teensy_send_float(uint16_t id, float d) {
 	buf[9] = u.b[3];
 	buf[10] = 0; // len of next command
 	
-	lock_irq();
+	lock_irq_low();
 	usb_send_packet(buf, 64);
 	unlock_irq();
 }
