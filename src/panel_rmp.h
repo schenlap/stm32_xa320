@@ -46,6 +46,10 @@ int32_t panel_rmp_get_aircraft_speed(void);
 uint32_t panel_rmp_get_aircraft_course(void);
 int32_t panel_rmp_get_aircraft_variometer(void);
 
+uint32_t panel_rmp_get_adf_dme(void);
+uint32_t panel_rmp_get_nav1_dme(void);
+uint32_t panel_rmp_get_nav2_dme(void);
+
 // Setter
 void panel_rmp_set_avionics_power(uint32_t on);
 #endif /* PANEL_RMP_H */

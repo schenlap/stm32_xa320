@@ -80,11 +80,13 @@ void task_display(void) {
 		case RMP_VOR_CRS:
 			freq = panel_rmp_get_nav1_freq();
 			freq_stdby = panel_rmp_get_nav1_crs();
+			snprintf(str, 3, "%02d", (int)panel_rmp_get_nav1_dme());
+			max7219_display_string(14, str);
 			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
 			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string_fixpoint(7, str, 99);
 			snprintf(str, 8, "%5d", (int)freq);
 			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V1");
@@ -92,6 +94,8 @@ void task_display(void) {
 		case RMP_ADF:
 			freq = panel_rmp_get_ndb_freq();
 			freq_stdby = panel_rmp_get_ndb_stdby_freq();
+			snprintf(str, 3, "%02d", (int)panel_rmp_get_adf_dme());
+			max7219_display_string(14, str);
 			if (!disp_in_newdata(freq, freq_stdby, act))
 				break;
 			snprintf(str, 8, "%5d", (int)freq);
@@ -114,11 +118,13 @@ void task_display(void) {
 		case RMP_VOR2_CRS:
 			freq = panel_rmp_get_nav2_freq();
 			freq_stdby = panel_rmp_get_nav2_crs();
+			snprintf(str, 3, "%02d", (int)panel_rmp_get_nav2_dme());
+			max7219_display_string(14, str);
 			if (!disp_in_newdata(freq_stdby, 0, act))
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
 			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string_fixpoint(7, str, 99);
 			snprintf(str, 8, "%5d", (int)freq);
 			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V2");
@@ -152,7 +158,7 @@ void task_display(void) {
 				break;
 			max7219_display_string_fixpoint(3, "     ", 99);
 			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 99);
+			max7219_display_string_fixpoint(7, str, 99);
 			snprintf(str, 8, "A%5d", (int)freq);
 			max7219_display_string_fixpoint(2, str, 99);
 			max7219_display_string(0, "AH");
