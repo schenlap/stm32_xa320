@@ -322,7 +322,7 @@ void task_panel_rmp(void) {
 		is_init = 1;
 	}
 
-	if (systime_get() - teensy_get_last_request_time() < 500) {
+	if (systime_get() - teensy_get_last_request_time() < 1500) {
 		//gpio_set_led(LED6, 1);
 	} else {
 		if (cnt++ > 5) {
