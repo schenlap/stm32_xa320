@@ -36,6 +36,9 @@
 #define ID_ADF_DME         25
 #define ID_NAV1_DME        26
 #define ID_NAV2_DME        27
+#define ID_NAV1_HDEF_DOTS10 28
+#define ID_NAV1_VDEF_DOTS10 29
+#define ID_NAV2_HDEF_DOTS10 30
 
 static uint8_t is_init = 0;
 rmp_act_t rmp_act = RMP_VOR;
@@ -69,6 +72,10 @@ uint32_t course = 360;
 uint32_t adf_dme = 0;
 uint32_t nav1_dme = 0;
 uint32_t nav2_dme = 0;
+
+int32_t nav1_hdef_dots10 = 25;
+int32_t nav1_vdef_dots10 = 25;
+int32_t nav2_hdef_dots10 = 25;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_connect_cb(uint8_t id, uint32_t data);
@@ -536,6 +543,18 @@ uint32_t panel_rmp_get_nav2_dme(void) {
 	return nav2_dme > 99 ? 99 : nav2_dme;
 }
 
+int32_t panel_rmp_get_nav1_hdef_dots10(void) {
+	return nav1_hdef_dots10;
+}
+
+int32_t panel_rmp_get_nav1_vdef_dots10(void) {
+	return nav1_vdef_dots10;
+}
+
+int32_t panel_rmp_get_nav2_hdef_dots10(void) {
+	return nav2_hdef_dots10;
+}
+
 /* try to register dataref to see ix X-Plane is started and ready
  * return: 0 .. ok, <0 .. error (X-PLane not ready)
  */
@@ -581,6 +600,10 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_ADF_DME, "sim/cockpit2/radios/indicators/adf1_dme_distance_nm", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_DME, "sim/cockpit2/radios/indicators/nav1_dme_distance_nm", 2, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV2_DME, "sim/cockpit2/radios/indicators/nav2_dme_distance_nm", 2, &panel_rmp_cb);
+		
+		teensy_register_dataref(ID_NAV1_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_hdef_dots_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV1_VDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_vdef_dots_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV2_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav2_hdef_dots_pilot", 2, &panel_rmp_cb);
 }
 
 
@@ -654,6 +677,15 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				break;
 		case ID_NAV2_DME:
 				nav2_dme = teensy_from_float(data);
+				break;
+		case ID_NAV1_HDEF_DOTS10:
+				nav1_hdef_dots10 = 10 * teensy_from_float(data);
+				break;
+		case ID_NAV1_VDEF_DOTS10:
+				nav1_vdef_dots10 = 10 * teensy_from_float(data);
+				break;
+		case ID_NAV2_HDEF_DOTS10:
+				nav2_hdef_dots10 = 10 * teensy_from_float(data);
 				break;
 	}
 }

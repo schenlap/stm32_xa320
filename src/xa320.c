@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -23,6 +24,8 @@ void task_switches(void);
 
 uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act);
 
+void str_add_dots(char *str, int dot10);
+int strinsert(char **dest, char *ins, size_t location);
 
 void task_encoder(void) {
 	encoder_task();
@@ -48,8 +51,64 @@ uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act) {
 	return new;
 }
 
+int strinsert(char **dest, char *ins, size_t location)
+{
+	size_t origsize = 0;
+	size_t resize = 0;
+	size_t inssize = 0;
+
+	if (!dest || !ins)
+		return -1;  // invalid parameter
+
+	if (strlen(ins) == 0)
+		return -1; // invalid parameter
+
+	location ++;
+	origsize = strlen(*dest);
+	inssize = strlen(ins);
+	resize = strlen(*dest) + inssize + 1; // 1 for the null terminator
+
+	if (location > origsize)
+		return -1; // invalid location, out of original string
+
+	// move string to make room for insertion
+	memmove(&(*dest)[location+inssize], &(*dest)[location], origsize - location);
+	(*dest)[origsize + inssize] = '\0'; // null terminate string
+
+	// insert string
+	memcpy(&(*dest)[location], ins, inssize);
+
+	return resize; // return buffer size
+}
+
+
+void str_add_dots(char *str, int dot10) {
+	// 2 points in middle as ok sign
+	if (abs(dot10) < 5) {
+		strinsert(&str, ".", 3);
+		strinsert(&str, ".", 4 + 1);
+	} else {
+		if (abs(dot10) < 10) {
+			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
+		} else if (abs(dot10) < 15) {
+			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
+			strinsert(&str, ".", dot10 > 0 ? 5 + 1 : 2);
+		} else if (abs(dot10) < 20) {
+			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
+			strinsert(&str, ".", dot10 > 0 ? 5 + 1: 2);
+			strinsert(&str, ".", dot10 > 0 ? 6 + 2: 1);
+		} else  {
+			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
+			strinsert(&str, ".", dot10 > 0 ? 5 + 1: 2);
+			strinsert(&str, ".", dot10 > 0 ? 6 + 2: 1);
+			strinsert(&str, ".", dot10 > 0 ? 7 + 3: 0);
+		}
+	}
+}
+
+
 void task_display(void) {
-	char str[8];
+	char str[8 * 2 + 1]; // str must hold digit * 2 (for points) + null byte
 	rmp_act_t act =  panel_rmp_get_active();
 	static rmp_act_t act_last = RMP_OFF;
 	uint32_t freq, freq_stdby;
@@ -80,13 +139,13 @@ void task_display(void) {
 		case RMP_VOR_CRS:
 			freq = panel_rmp_get_nav1_freq();
 			freq_stdby = panel_rmp_get_nav1_crs();
-			snprintf(str, 3, "%02d", (int)panel_rmp_get_nav1_dme());
-			max7219_display_string(14, str);
-			if (!disp_in_newdata(freq_stdby, 0, act))
-				break;
-			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(7, str, 99);
+			snprintf(str, 9, "C-%03d %02d", (int)freq_stdby, (int)panel_rmp_get_nav1_dme());
+			str_add_dots(str, (int)panel_rmp_get_nav1_hdef_dots10());
+			max7219_display_string(8, str);
+			//max7219_display_string(14, str);
+			//if (!disp_in_newdata(freq_stdby, 0, act))
+			//	break;
+			//max7219_display_string_fixpoint(3, "     ", 99);
 			snprintf(str, 8, "%5d", (int)freq);
 			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V1");
@@ -118,13 +177,10 @@ void task_display(void) {
 		case RMP_VOR2_CRS:
 			freq = panel_rmp_get_nav2_freq();
 			freq_stdby = panel_rmp_get_nav2_crs();
-			snprintf(str, 3, "%02d", (int)panel_rmp_get_nav2_dme());
-			max7219_display_string(14, str);
-			if (!disp_in_newdata(freq_stdby, 0, act))
-				break;
+			snprintf(str, 9, "C-%03d %02d", (int)freq_stdby, (int)panel_rmp_get_nav2_dme());
+			str_add_dots(str, (int)panel_rmp_get_nav2_hdef_dots10());
+			max7219_display_string(8, str);
 			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(7, str, 99);
 			snprintf(str, 8, "%5d", (int)freq);
 			max7219_display_string_fixpoint(3, str, 3);
 			max7219_display_string(0, "V2");

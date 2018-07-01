@@ -50,6 +50,10 @@ uint32_t panel_rmp_get_adf_dme(void);
 uint32_t panel_rmp_get_nav1_dme(void);
 uint32_t panel_rmp_get_nav2_dme(void);
 
+int32_t panel_rmp_get_nav1_hdef_dots10(void);
+int32_t panel_rmp_get_nav1_vdef_dots10(void);
+int32_t panel_rmp_get_nav2_hdef_dots10(void);
+
 // Setter
 void panel_rmp_set_avionics_power(uint32_t on);
 #endif /* PANEL_RMP_H */
