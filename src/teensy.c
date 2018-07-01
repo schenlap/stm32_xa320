@@ -50,9 +50,11 @@ int32_t teensy_register_dataref(uint8_t ident, char *str, uint8_t type, void (*c
 	return ret;
 }
 
-void teensy_send_int(uint16_t id, uint32_t d) {
+int teensy_send_int(uint16_t id, uint32_t d) {
+	int ret;
+
 	if (!usb_ready)
-		return;
+		return 0;
 
 	buf[0] = 10;
 	buf[1] = 0x02;        // Write command
@@ -67,8 +69,10 @@ void teensy_send_int(uint16_t id, uint32_t d) {
 	buf[10] = 0; // len of next command
 
 	lock_irq_low();
-	usb_send_packet(buf, 64);
+	ret = usb_send_packet(buf, 64);
 	unlock_irq();
+
+	return ret;
 }
 
 void teensy_send_command_once(uint16_t id) {

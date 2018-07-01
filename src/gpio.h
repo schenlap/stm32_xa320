@@ -10,8 +10,8 @@
 #define LED6_PIN GPIO5 // red
 #define LED6_PORT GPIOC
 
-#define LED5 LED5_PIN
-#define LED6 LED6_PIN
+#define LED5 LED5_PIN // green led, right of encoder
+#define LED6 LED6_PIN // red led, right of encoder
 
 #define SWITCHB1_PIN GPIO4
 #define SWITCHB1_PORT GPIOA

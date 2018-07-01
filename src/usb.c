@@ -74,10 +74,16 @@ usbd_device *my_usb_device;
 /* TODO: IRQ is locked during send, so timeout does not work */
 int usb_send_packet(const void *buf, int len){
 	uint32_t timeout = systime_get() + 15; // wait max 15 milli sec
+	uint32_t cnt = 0;
+	uint32_t delay;
 
     while(usbd_ep_write_packet(my_usb_device, 0x81, buf, len) == 0) {
 		if (systime_get() > timeout)
 			return -1;
+		if (cnt++ > 5)
+			return -1;
+		delay = 10000;
+		while(delay--) ;
 	}
 	return 0;
 }
