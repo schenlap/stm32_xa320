@@ -16,7 +16,8 @@ typedef enum {
 	RMP_BFO, /* Autopilot heading */
 	RMP_BFO_ALT, /* Autopilot height */
 	RMP_COM1,
-	RMP_COM2
+	RMP_COM2,
+	RMP_VHF1 /* aircraft speed, course, vario */
 } rmp_act_t;
 
 rmp_act_t panel_rmp_get_active(void);
@@ -40,6 +41,10 @@ uint32_t panel_rmp_get_com2_stdby_freq(void);
 
 uint32_t panel_rmp_get_autop_heading(void);
 uint32_t panel_rmp_get_autop_alt(void);
+
+int32_t panel_rmp_get_aircraft_speed(void);
+uint32_t panel_rmp_get_aircraft_course(void);
+int32_t panel_rmp_get_aircraft_variometer(void);
 
 // Setter
 void panel_rmp_set_avionics_power(uint32_t on);

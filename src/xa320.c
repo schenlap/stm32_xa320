@@ -169,6 +169,18 @@ void task_display(void) {
 			max7219_display_string_fixpoint(2, str, 99);
 			max7219_display_string(0, "AA");
 		break;
+		case RMP_VHF1:
+			snprintf(str, 7, "S-%4d", (int)panel_rmp_get_aircraft_speed());
+			max7219_display_string(0, str);
+			snprintf(str, 5, "C%3d", (int)panel_rmp_get_aircraft_course());
+			max7219_display_string(7, str);
+			int variometer = panel_rmp_get_aircraft_variometer();
+			if (variometer > 0)
+				snprintf(str, 6, "+%04d", variometer);
+			else
+				snprintf(str, 6, "-%04d", abs(variometer));
+			max7219_display_string(11, str);
+		break;
 		default:
 			if (!disp_in_newdata(0, 0, act))
 				break;

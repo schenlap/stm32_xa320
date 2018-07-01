@@ -30,6 +30,9 @@
 #define ID_COM1_LARGE_DOWN 19
 #define ID_COM1_SMALL_UP   20
 #define ID_COM1_SMALL_DOWN 21
+#define ID_AIRCRAFT_AIRSPEED 22
+#define ID_AIRCRAFT_VARIO 23
+#define ID_AIRCRAFT_COURSE 24
 
 static uint8_t is_init = 0;
 rmp_act_t rmp_act = RMP_VOR;
@@ -55,6 +58,10 @@ uint32_t avionics_power = 99; // must be != 0|1 to be sent on startup
 
 int32_t autop_heading = 90;
 int32_t autop_alt = 2000;
+
+int32_t airspeed = 999;
+int32_t variometer = -999;
+uint32_t course = 360;
 
 void panel_rmp_cb(uint8_t id, uint32_t data);
 void panel_rmp_connect_cb(uint8_t id, uint32_t data);
@@ -97,6 +104,9 @@ void panel_set_led(void) {
 		case RMP_COM2:
 				led_set(LED_HF2, 1);
 				break;
+		case RMP_VHF1:
+				led_set(LED_VHF1, 1);
+				break;
 		default:
 				;
 		}
@@ -121,6 +131,8 @@ uint8_t panel_get_associated_led(uint8_t page) {
 			case RMP_BFO: /* Autopilot heading */
 			case RMP_BFO_ALT: /* Autopilot height */
 					return LED_BFO;
+			case RMP_VHF1: /* Airplane speed, course and varia */
+					return LED_VHF1;
 			default:
 					return -1;
 	}
@@ -159,6 +171,8 @@ uint8_t panel_rmp_switch(void) {
 	} else if (gpio_get_pos_event(SWITCH_NAV)) {
 			led_set(LED_SEL, 1);
 			return 0; // nothing to do here
+	} else if (gpio_get_pos_event(SWITCH_VHF1)) { 
+		new = RMP_VHF1;
 	} else {
 		return 0; // No switch pressed
 	}
@@ -267,6 +281,8 @@ void task_panel_rmp(void) {
 				                  90000,
 				                  0,
 				                  ID_AUTOP_ALT);
+			break;
+			case RMP_VHF1:
 			break;
 			default:
 			break;
@@ -489,6 +505,18 @@ uint32_t panel_rmp_get_autop_alt(void) {
 	return autop_alt;
 }
 
+int32_t panel_rmp_get_aircraft_speed(void) {
+	return airspeed;
+}
+
+uint32_t panel_rmp_get_aircraft_course(void) {
+	return course;
+}
+
+int32_t panel_rmp_get_aircraft_variometer(void) {
+	return variometer;
+}
+
 /* try to register dataref to see ix X-Plane is started and ready
  * return: 0 .. ok, <0 .. error (X-PLane not ready)
  */
@@ -527,7 +555,9 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_COM1_SMALL_DOWN, "AirbusFBW/RMP1FreqDownSml", 0, &panel_rmp_cb);
 #else
 #endif
-
+		teensy_register_dataref(ID_AIRCRAFT_AIRSPEED, "sim/cockpit2/gauges/indicators/airspeed_kts_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_AIRCRAFT_VARIO, "sim/cockpit2/gauges/indicators/vvi_fpm_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_AIRCRAFT_COURSE, "sim/cockpit2/gauges/indicators/compass_heading_deg_mag", 2, &panel_rmp_cb);
 }
 
 
@@ -583,6 +613,15 @@ void panel_rmp_cb(uint8_t id, uint32_t data) {
 				break;
 		case ID_AVIONICS_POWER:
 				//avionics_power_on = data;
+				break;
+		case ID_AIRCRAFT_AIRSPEED:
+				airspeed = teensy_from_float(data);
+				break;
+		case ID_AIRCRAFT_VARIO:
+				variometer = teensy_from_float(data);
+				break;
+		case ID_AIRCRAFT_COURSE:
+				course = teensy_from_float(data);
 				break;
 	}
 }
