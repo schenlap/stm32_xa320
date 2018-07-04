@@ -24,26 +24,26 @@
 #include "pwm.h"
 #include "servo.h"
 
-void servo_init(void)
+void servo_setup(void)
 {
      /* init timer2 with a period of 20ms */
-     pwm_init_timer(&RCC_APB1ENR, RCC_APB1ENR_TIM2EN, TIM2, PWM_PRESCALE, PWM_PERIOD);
+     pwm_init_timer(&RCC_APB1ENR, RCC_APB1ENR_TIM4EN, TIM2, PWM_PRESCALE, PWM_PERIOD);
 
-     /* init output of channel2 of timer2 */
-     pwm_init_output_channel(TIM2, SERVO_CH1, &RCC_AHB1ENR, RCC_AHB1ENR_IOPAEN, GPIOA, GPIO1);
+     /* init output of channel1 of timer4 */
+     pwm_init_output_channel(TIM4, SERVO_CH1, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO6);
 
-     /* init output of channel3 of timer2 */
-     pwm_init_output_channel(TIM2, SERVO_CH2, &RCC_AHB1ENR, RCC_AHB1ENR_IOPAEN, GPIOA, GPIO2);
+     /* init output of channel2 of timer4 */
+     pwm_init_output_channel(TIM4, SERVO_CH2, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO7);
 
-     pwm_set_pulse_width(TIM2, SERVO_CH1, SERVO_NULL);
-     pwm_set_pulse_width(TIM2, SERVO_CH2, SERVO_NULL);
+     pwm_set_pulse_width(TIM4, SERVO_CH1, SERVO_NULL);
+     pwm_set_pulse_width(TIM4, SERVO_CH2, SERVO_NULL);
 
      /* start timer1 */
-     pwm_start_timer(TIM2);
+     pwm_start_timer(TIM4);
 }
 
 void servo_set_position(enum tim_oc_id ch, uint32_t pos_us)
 {
-     pwm_set_pulse_width(TIM2, ch, pos_us);
+     pwm_set_pulse_width(TIM4, ch, pos_us);
 }
 

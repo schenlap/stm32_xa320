@@ -50,21 +50,21 @@
 /**
  * TIM2 channel for servo 1.
  *
- * Changing this also requires to change settings in {@link servo_init}!
+ * Changing this also requires to change settings in {@link servo_setup}!
  */
 #define SERVO_CH1		TIM_OC2
 
 /**
  * TIM2 channel for servo 2.
  *
- * Changing this also requires to change settings in {@link servo_init}!
+ * Changing this also requires to change settings in {@link servo_setup}!
  */
 #define SERVO_CH2		TIM_OC3
 
 /**
  * Initialize and start the PWM used for the servos, drive servos to middle position.
  */
-void servo_init(void);
+void servo_setup(void);
 
 /**
  * Drive the servo connected to the given channel to the given position in us.

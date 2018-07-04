@@ -14,247 +14,38 @@
 #include "led.h"
 #include "max6956.h" // max6956_setup()
 #include "usb.h"
+#include "servo.h"
 #include "teensy.h"
 #include "panel_rmp.h"
+#include "panel_fis.h"
+#include "xa320.h"
 
 void task_encoder(void);
-void task_display(void);
+
 void task_switches(void);
+void task_xplane_detect(void);
 
+int xa320_setup_datarefs_connect(void);
 
-uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act);
-
-void str_add_dots(char *str, int dot10);
-int strinsert(char **dest, char *ins, size_t location);
+static uint32_t cnt = 0;
+static uint32_t xplane_ready = 0;
+static uint8_t is_init = 0;
 
 void task_encoder(void) {
 	encoder_task();
 }
 
-uint8_t disp_in_newdata(uint32_t freq, uint32_t freq_stdby, rmp_act_t act) {
-	static uint32_t freq_last;
-	static uint32_t freq_stdby_last;
-	static rmp_act_t act_last;
-	uint8_t new = 0;
 
-	if (freq != freq_last)
-		new = 1;
-	else if (freq_stdby != freq_stdby_last)
-		new = 1;
-	else if (act != act_last)
-		new = 1;
+/* try to register dataref to see ix X-Plane is started and ready
+ * return: 0 .. ok, <0 .. error (X-PLane not ready)
+ */
+int xa320_setup_datarefs_connect(void) {
+		int ret;
 
-	freq_last = freq;
-	freq_stdby_last = freq_stdby;
-	act_last = act;
-
-	return new;
+		ret = teensy_register_dataref(ID_AIRCRAFT_TYPE, "sim/aircraft/view/acf_ICAO", 1, &panel_rmp_connect_cb);
+		return ret;
 }
 
-int strinsert(char **dest, char *ins, size_t location)
-{
-	size_t origsize = 0;
-	size_t resize = 0;
-	size_t inssize = 0;
-
-	if (!dest || !ins)
-		return -1;  // invalid parameter
-
-	if (strlen(ins) == 0)
-		return -1; // invalid parameter
-
-	location ++;
-	origsize = strlen(*dest);
-	inssize = strlen(ins);
-	resize = strlen(*dest) + inssize + 1; // 1 for the null terminator
-
-	if (location > origsize)
-		return -1; // invalid location, out of original string
-
-	// move string to make room for insertion
-	memmove(&(*dest)[location+inssize], &(*dest)[location], origsize - location);
-	(*dest)[origsize + inssize] = '\0'; // null terminate string
-
-	// insert string
-	memcpy(&(*dest)[location], ins, inssize);
-
-	return resize; // return buffer size
-}
-
-
-void str_add_dots(char *str, int dot10) {
-	// 2 points in middle as ok sign
-	if (abs(dot10) < 5) {
-		strinsert(&str, ".", 3);
-		strinsert(&str, ".", 4 + 1);
-	} else {
-		if (abs(dot10) < 10) {
-			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
-		} else if (abs(dot10) < 15) {
-			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
-			strinsert(&str, ".", dot10 > 0 ? 5 + 1 : 2);
-		} else if (abs(dot10) < 20) {
-			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
-			strinsert(&str, ".", dot10 > 0 ? 5 + 1: 2);
-			strinsert(&str, ".", dot10 > 0 ? 6 + 2: 1);
-		} else  {
-			strinsert(&str, ".", dot10 > 0 ? 4 : 3);
-			strinsert(&str, ".", dot10 > 0 ? 5 + 1: 2);
-			strinsert(&str, ".", dot10 > 0 ? 6 + 2: 1);
-			strinsert(&str, ".", dot10 > 0 ? 7 + 3: 0);
-		}
-	}
-}
-
-
-void task_display(void) {
-	char str[8 * 2 + 1]; // str must hold digit * 2 (for points) + null byte
-	rmp_act_t act =  panel_rmp_get_active();
-	static rmp_act_t act_last = RMP_OFF;
-	uint32_t freq, freq_stdby;
-
-	if (gpio_get_state(SWITCH_RMP_OFF)) {
-		disp_in_newdata(-1, -1, RMP_OFF);
-		max7219_ClearAll();
-		return;	
-	}
-
-	if (act != act_last) {
-		act_last = act;
-		max7219_ClearAll();
-	}
-
-	switch(act) {
-		case RMP_VOR:
-			freq = panel_rmp_get_nav1_freq();
-			freq_stdby = panel_rmp_get_nav1_stdby_freq();
-			if (!disp_in_newdata(freq, freq_stdby, act))
-				break;
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 3);
-			max7219_display_string(0, "V1");
-		break;
-		case RMP_VOR_CRS:
-			freq = panel_rmp_get_nav1_freq();
-			freq_stdby = panel_rmp_get_nav1_crs();
-			snprintf(str, 9, "C-%03d %02d", (int)freq_stdby, (int)panel_rmp_get_nav1_dme());
-			str_add_dots(str, (int)panel_rmp_get_nav1_hdef_dots10());
-			max7219_display_string(8, str);
-			//max7219_display_string(14, str);
-			//if (!disp_in_newdata(freq_stdby, 0, act))
-			//	break;
-			//max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			max7219_display_string(0, "V1");
-		break;
-		case RMP_ADF:
-			freq = panel_rmp_get_ndb_freq();
-			freq_stdby = panel_rmp_get_ndb_stdby_freq();
-			snprintf(str, 3, "%02d", (int)panel_rmp_get_adf_dme());
-			max7219_display_string(14, str);
-			if (!disp_in_newdata(freq, freq_stdby, act))
-				break;
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 99);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 99);
-			max7219_display_string(0, "AD");
-		break;
-		case RMP_VOR2:
-			freq = panel_rmp_get_nav2_freq();
-			freq_stdby = panel_rmp_get_nav2_stdby_freq();
-			if (!disp_in_newdata(freq, freq_stdby, act))
-				break;
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 3);
-			max7219_display_string(0, "V2");
-		break;
-		case RMP_VOR2_CRS:
-			freq = panel_rmp_get_nav2_freq();
-			freq_stdby = panel_rmp_get_nav2_crs();
-			snprintf(str, 9, "C-%03d %02d", (int)freq_stdby, (int)panel_rmp_get_nav2_dme());
-			str_add_dots(str, (int)panel_rmp_get_nav2_hdef_dots10());
-			max7219_display_string(8, str);
-			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			max7219_display_string(0, "V2");
-		break;
-		case RMP_COM1:
-			freq = panel_rmp_get_com1_freq() / 10;
-			freq_stdby = panel_rmp_get_com1_stdby_freq() / 10;
-			if (!disp_in_newdata(freq, freq_stdby, act))
-				break;
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 3);
-			max7219_display_string(0, "C1");
-		break;
-		case RMP_COM2:
-			freq = panel_rmp_get_com2_freq() / 10;
-			freq_stdby = panel_rmp_get_com2_stdby_freq() / 10;
-			if (!disp_in_newdata(freq, freq_stdby, act))
-				break;
-			snprintf(str, 8, "%5d", (int)freq);
-			max7219_display_string_fixpoint(3, str, 3);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 3);
-			max7219_display_string(0, "C2");
-		break;
-		case RMP_BFO:
-			freq_stdby = panel_rmp_get_autop_heading();
-			freq = panel_rmp_get_autop_alt();
-			if (!disp_in_newdata(freq_stdby, 0, act))
-				break;
-			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 7, " C-%03d", (int)freq_stdby);
-			max7219_display_string_fixpoint(7, str, 99);
-			snprintf(str, 8, "A%5d", (int)freq);
-			max7219_display_string_fixpoint(2, str, 99);
-			max7219_display_string(0, "AH");
-		break;
-		case RMP_BFO_ALT:
-			freq_stdby = panel_rmp_get_autop_alt();
-			freq = panel_rmp_get_autop_heading();
-			if (!disp_in_newdata(freq_stdby, 0, act))
-				break;
-			max7219_display_string_fixpoint(3, "     ", 99);
-			snprintf(str, 8, "%5d", (int)freq_stdby);
-			max7219_display_string_fixpoint(8, str, 99);
-			snprintf(str, 7, " C-%03d", (int)freq);
-			max7219_display_string_fixpoint(2, str, 99);
-			max7219_display_string(0, "AA");
-		break;
-		case RMP_VHF1:
-			snprintf(str, 7, "S-%4d", (int)panel_rmp_get_aircraft_speed());
-			max7219_display_string(0, str);
-			snprintf(str, 5, "C%3d", (int)panel_rmp_get_aircraft_course());
-			max7219_display_string(7, str);
-			int variometer = panel_rmp_get_aircraft_variometer();
-			if (variometer > 0)
-				snprintf(str, 6, "+%04d", variometer);
-			else
-				snprintf(str, 6, "-%04d", abs(variometer));
-			max7219_display_string(11, str);
-		break;
-		default:
-			if (!disp_in_newdata(0, 0, act))
-				break;
-			snprintf(str, 8, "%5d", (int)0);
-			max7219_display_string_fixpoint(3, str, 3);
-			snprintf(str, 8, "%5d", (int)0);
-			max7219_display_string_fixpoint(8, str, 3);
-			max7219_display_string(0, "--");
-		break;
-	}
-
-}
 
 void task_switches(void) {
 	uint32_t on;
@@ -265,6 +56,57 @@ void task_switches(void) {
 		on_last = on;
 		led_standby(!on);
 	}
+}
+
+
+void task_xplane_detect(void) {
+	if (!usb_ready)
+		return;
+	gpio_set_led(LED6, 0);
+
+	if (!xplane_ready) {
+		xa320_setup_datarefs_connect(); // fill buffer
+		if (!xplane_ready && xa320_setup_datarefs_connect() == 0) {
+				xplane_ready = 1;
+		}
+	}
+
+	if (!xplane_ready) {
+		gpio_set_led(LED5, 0);
+			return;
+	}
+	gpio_set_led(LED5, 1);
+
+	if (!is_init) {
+		uint32_t timeout;
+		/* wait 100ms until teensy plugin is ready */
+		timeout = systime_get() + 100;
+		while(systime_get() < timeout)
+			;
+		panel_rmp_setup_datarefs();
+		is_init = 1;
+	}
+
+	if (systime_get() - teensy_get_last_request_time() < 1500) {
+		//gpio_set_led(LED6, 1);
+	} else {
+		if (cnt++ > 5) {
+			/* connection lost, try to reconnect */
+			xplane_ready = 0;
+			is_init = 0;
+			cnt = 0;
+		}
+	}
+}
+
+
+uint8_t xa320_datarefs_ready() {
+	return is_init;
+}
+
+
+uint8_t xa320_xplane_ready() {
+	return xplane_ready;
 }
 
 int main(void)
@@ -296,8 +138,12 @@ int main(void)
 
 	panel_rmp_setup();
 
+	servo_setup();
+
 	//task_create(task_encoder, 2);
+	task_create(task_xplane_detect, 50);
 	task_create(task_panel_rmp, 10);
+	task_create(task_panel_fis, 10);
 	task_create(task_display, 100);
 	task_create(task_switches, 100);
 	task_create(gpio_task, 50);

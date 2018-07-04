@@ -2,7 +2,9 @@
 #define PANEL_RMP_H
 
 void panel_rmp_setup_datarefs(void);
+void panel_rmp_connect_cb(uint8_t id, uint32_t data);
 void task_panel_rmp(void);
+void task_display(void);
 void panel_rmp_setup(void);
 
 typedef enum {
