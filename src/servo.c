@@ -39,8 +39,12 @@ void servo_setup(void)
      pwm_start_timer(TIM4);
 }
 
+//uint32_t debug_tim_cnt = 0;
+//uint32_t debug_pwm_out = 0;
 void servo_set_position(uint8_t id, uint32_t pos_us)
 {
+//	debug_tim_cnt = timer_get_counter(TIM4);
+//	debug_pwm_out = gpio_get(GPIOB, GPIO6);
 	switch(id) {
 		case SERVO_ALT:
 			pwm_set_pulse_width(TIM4, TIM_OC1, pos_us);

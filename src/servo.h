@@ -54,6 +54,7 @@
  */
 #define SERVO_ALT       0
 #define SERVO_VARIO     1
+#define SERVO_CNT       2
 
 /**
  * Initialize and start the PWM used for the servos, drive servos to middle position.
