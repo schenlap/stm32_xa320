@@ -26,24 +26,28 @@
 
 void servo_setup(void)
 {
-     /* init timer2 with a period of 20ms */
-     pwm_init_timer(&RCC_APB1ENR, RCC_APB1ENR_TIM4EN, TIM2, PWM_PRESCALE, PWM_PERIOD);
+     /* init timer4 with a period of 20ms */
+     pwm_init_timer(&RCC_APB1ENR, RCC_APB1ENR_TIM4EN, TIM4, PWM_PRESCALE, PWM_PERIOD);
 
-     /* init output of channel1 of timer4 */
-     pwm_init_output_channel(TIM4, SERVO_CH1, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO6);
+     pwm_init_output_channel(TIM4, TIM_OC1, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO6);
+     pwm_init_output_channel(TIM4, TIM_OC2, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO7);
 
-     /* init output of channel2 of timer4 */
-     pwm_init_output_channel(TIM4, SERVO_CH2, &RCC_AHB1ENR, RCC_AHB1ENR_IOPBEN, GPIOB, GPIO7);
-
-     pwm_set_pulse_width(TIM4, SERVO_CH1, SERVO_NULL);
-     pwm_set_pulse_width(TIM4, SERVO_CH2, SERVO_NULL);
+     pwm_set_pulse_width(TIM4, TIM_OC1, SERVO_NULL);
+     pwm_set_pulse_width(TIM4, TIM_OC2, SERVO_NULL);
 
      /* start timer1 */
      pwm_start_timer(TIM4);
 }
 
-void servo_set_position(enum tim_oc_id ch, uint32_t pos_us)
+void servo_set_position(uint8_t id, uint32_t pos_us)
 {
-     pwm_set_pulse_width(TIM4, ch, pos_us);
+	switch(id) {
+		case SERVO_ALT:
+			pwm_set_pulse_width(TIM4, TIM_OC1, pos_us);
+			break;
+		case SERVO_VARIO:
+			pwm_set_pulse_width(TIM4, TIM_OC2, pos_us);
+			break;
+	}
 }
 

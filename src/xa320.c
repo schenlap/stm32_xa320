@@ -27,6 +27,8 @@ void task_xplane_detect(void);
 
 int xa320_setup_datarefs_connect(void);
 
+void servo_display_setup(void);
+
 static uint32_t cnt = 0;
 static uint32_t xplane_ready = 0;
 static uint8_t is_init = 0;
@@ -139,6 +141,8 @@ int main(void)
 	panel_rmp_setup();
 
 	servo_setup();
+
+	servo_display_setup();
 
 	//task_create(task_encoder, 2);
 	task_create(task_xplane_detect, 50);

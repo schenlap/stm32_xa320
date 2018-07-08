@@ -717,9 +717,9 @@ int32_t panel_rmp_get_nav2_hdef_dots10(void) {
 
 
 void panel_rmp_setup_datarefs(void) {
-		teensy_register_dataref(ID_AIRCRAFT_TYPE, "sim/aircraft/view/acf_ICAO", 1, &panel_rmp_connect_cb);
-		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", 1, &panel_rmp_cb);
+		teensy_register_dataref(ID_AIRCRAFT_TYPE, "sim/aircraft/view/acf_ICAO", TEENSY_INT, &panel_rmp_connect_cb);
+		teensy_register_dataref(ID_STROBE_LIGHT, "sim/cockpit/electrical/strobe_lights_on", TEENSY_INT, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV_LIGHT, "sim/cockpit/electrical/nav_lights_on", TEENSY_INT, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_FREQ, "sim/cockpit2/radios/actuators/nav1_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_STDBY_FREQ, "sim/cockpit2/radios/actuators/nav1_standby_frequency_hz", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_NAV1_CRS, "sim/cockpit/radios/nav1_obs_degm", 2, &panel_rmp_cb);
@@ -734,7 +734,7 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_COM2_FREQ, "*2/radios/actuators/com2_frequency_hz_833", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_COM2_STDBY_FREQ, "*2/radios/actuators/com2_standby_frequency_hz_833", 1, &panel_rmp_cb);
 		teensy_register_dataref(ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", 1, &panel_rmp_cb);
-		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_AUTOP_HEADING, "sim/cockpit2/autopilot/heading_dial_deg_mag_pilot", TEENSY_FLOAT, &panel_rmp_cb);
 		teensy_register_dataref(ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", 2, &panel_rmp_cb);
 #ifdef QPAC_A320
 		teensy_register_dataref(ID_COM1_STDBY_FREQ,   "AirbusFBW/RMP1StbyFreq", 1, &panel_rmp_cb);
@@ -748,13 +748,13 @@ void panel_rmp_setup_datarefs(void) {
 		teensy_register_dataref(ID_AIRCRAFT_VARIO, "sim/cockpit2/gauges/indicators/vvi_fpm_pilot", 2, &panel_rmp_cb);
 //		teensy_register_dataref(ID_AIRCRAFT_COURSE, "sim/cockpit2/gauges/indicators/compass_heading_deg_mag", 2, &panel_rmp_cb);
 
-		teensy_register_dataref(ID_ADF_DME, "sim/cockpit2/radios/indicators/adf1_dme_distance_nm", 2, &panel_rmp_cb);
-		teensy_register_dataref(ID_NAV1_DME, "sim/cockpit2/radios/indicators/nav1_dme_distance_nm", 2, &panel_rmp_cb);
-		teensy_register_dataref(ID_NAV2_DME, "sim/cockpit2/radios/indicators/nav2_dme_distance_nm", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_ADF_DME, "sim/cockpit2/radios/indicators/adf1_dme_distance_nm", TEENSY_FLOAT, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV1_DME, "sim/cockpit2/radios/indicators/nav1_dme_distance_nm", TEENSY_FLOAT, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV2_DME, "sim/cockpit2/radios/indicators/nav2_dme_distance_nm", TEENSY_FLOAT, &panel_rmp_cb);
 		
-		teensy_register_dataref(ID_NAV1_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_hdef_dots_pilot", 2, &panel_rmp_cb);
-		teensy_register_dataref(ID_NAV1_VDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_vdef_dots_pilot", 2, &panel_rmp_cb);
-		teensy_register_dataref(ID_NAV2_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav2_hdef_dots_pilot", 2, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV1_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_hdef_dots_pilot", TEENSY_FLOAT, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV1_VDEF_DOTS10, "sim/cockpit2/radios/indicators/nav1_vdef_dots_pilot", TEENSY_FLOAT, &panel_rmp_cb);
+		teensy_register_dataref(ID_NAV2_HDEF_DOTS10, "sim/cockpit2/radios/indicators/nav2_hdef_dots_pilot", TEENSY_FLOAT, &panel_rmp_cb);
 }
 
 

@@ -52,14 +52,8 @@
  *
  * Changing this also requires to change settings in {@link servo_setup}!
  */
-#define SERVO_CH1		TIM_OC2
-
-/**
- * TIM2 channel for servo 2.
- *
- * Changing this also requires to change settings in {@link servo_setup}!
- */
-#define SERVO_CH2		TIM_OC3
+#define SERVO_ALT       0
+#define SERVO_VARIO     1
 
 /**
  * Initialize and start the PWM used for the servos, drive servos to middle position.
@@ -69,9 +63,9 @@ void servo_setup(void);
 /**
  * Drive the servo connected to the given channel to the given position in us.
  *
- * @param[in]	ch		The channel of the servo. E.g. SERVO_CH1, SERVO_CH2.
+ * @param[in]	id		The channel of the servo. E.g. SERVO_ALT, ...
  * @param[in]	pos_us	The position in us to which to drive the servo to.
  */
-void servo_set_position(enum tim_oc_id ch, uint32_t pos_us);
+void servo_set_position(uint8_t id, uint32_t pos_us);
 
 #endif
