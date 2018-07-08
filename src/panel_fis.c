@@ -18,16 +18,22 @@
 #define SERVO_DEBUG 1
 //#undef SERVO_DEBUG
 
-void servo_display_value(uint16_t id, int32_t data, servo_display_defs *s);
+/* nonlinear functions */
+servo_display_nonlinear_t fis_nl_altimeter[] = {
+	{4, 4}, // array length
+	{0, 0},
+	{100, 100},
+	{500, 500},
+	{5000, 5000} // 5000 will not be reached
+};
 
 servo_display_defs servo_defs[] = {
-	{SERVO_ALT, SERVO_MIN, SERVO_MAX, -1, 0, 5000, 1, TEENSY_INT, ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude"}
-	//{SERVO_VOR1, SERVO_MIN, SERVO_MAX, -10, -2500, 2500, 1000, TEENSY_FLOAT, ID_AUTOP_ALT, "sim/cockpit/nav1"}
+	{SERVO_ALT, SERVO_MIN, SERVO_MAX, -1, fis_nl_altimeter, 0, 5000, 1, TEENSY_INT, ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", &panel_fis_cb}
+	//{SERVO_ALT, SERVO_MIN, SERVO_MAX, -1, SERVO_LINEAR, 0, 5000, 1, TEENSY_FLOAT, ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", &panel_fis_cb}
 };
 
 
 void task_panel_fis(void) {
-	//panel_fis_cb(ID_AUTOP_ALT, 0);
 #if defined SERVO_DEBUG
 	static uint32_t servo_debug_data_us = SERVO_MIN;
 	char str[8 * 2 + 1];
@@ -51,26 +57,8 @@ void task_panel_fis(void) {
 
 	snprintf(str, 9, "%5d US", (int)servo_debug_data_us);
 	max7219_display_string(8, str);
+
 #endif
-}
-
-/* display value with servo, data is already multiplied with factor */
-void servo_display_value(uint16_t id, int32_t data, servo_display_defs *s) {
-	int32_t pos_us;
-
-	if (data > s->simval_max)
-		data = s->simval_max;
-	if (data < s->simval_min)
-		data = s->simval_min;
-
-	pos_us = (data - s->simval_min) * (s->servo_max - s->servo_min) / (s->simval_max - s->simval_min) + s->servo_min + s->servo_offset;
-
-	if (pos_us > SERVO_MAX)
-		pos_us = SERVO_MAX;
-	if (pos_us < SERVO_MIN)
-		pos_us = SERVO_MIN;
-
-	servo_set_position(id, pos_us);
 }
 
 
@@ -87,11 +75,14 @@ void panel_fis_cb(uint8_t id, uint32_t data) {
 }
 
 
+void panel_fis_setup_datarefs(void) {
+	for (uint32_t i = 0; i < sizeof(servo_defs)/sizeof(servo_display_defs); i++) {
+		teensy_register_dataref(servo_defs[i].ref_id, servo_defs[i].ref, servo_defs[i].simval_type, servo_defs[i].cb);
+	}
+}
+
+
 void panel_fis_setup(void) {
-	/* TODO REGSITER DATAREFS AFTER CONNECT */
-//	for (uint32_t i = 0; i < sizeof(servo_defs)/sizeof(servo_display_defs); i++) {
-//		teensy_register_dataref(servo_defs[i].ref_id, servo_defs[i].ref, servo_defs[i].simval_type, &panel_fis_cb);
-//	}
 
 #if defined SERVO_DEBUG
 led_set(LED_SEL, 1);

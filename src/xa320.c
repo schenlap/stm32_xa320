@@ -86,6 +86,7 @@ void task_xplane_detect(void) {
 		while(systime_get() < timeout)
 			;
 		panel_rmp_setup_datarefs();
+		panel_fis_setup_datarefs();
 		is_init = 1;
 	}
 
