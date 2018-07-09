@@ -15,8 +15,8 @@
 #include "max7219.h" // for SERVO_DEBUG
 #include "panel_fis.h"
 
-#define SERVO_DEBUG 1
-//#undef SERVO_DEBUG
+//#define SERVO_DEBUG 1
+#undef SERVO_DEBUG
 
 /* nonlinear functions */
 servo_display_nonlinear_t fis_nl_altimeter[] = {
