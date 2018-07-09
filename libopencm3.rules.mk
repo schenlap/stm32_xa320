@@ -136,6 +136,7 @@ list: $(BINARY).list
 
 images: $(BINARY).images
 flash: $(BINARY).flash
+stflash: $(BINARY).stflash
 
 %.images: %.bin %.hex %.srec %.list %.map
 	@#printf "*** $* images generated ***\n"
@@ -196,6 +197,18 @@ styleclean: $(STYLECHECKFILES:=.styleclean)
 %.stlink-flash: %.bin
 	@printf "  FLASH  $<\n"
 	$(Q)$(STFLASH) write $(*).bin 0x8000000
+
+# set stlink v2-1 in [find interface/stlink-v2-1.cfg]
+# in file /usr/share/openocd/scripts/board/stm32f4discovery.cfg
+%.stflash: %.hex
+	@printf "  ST-FLASH   $<\n"
+	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
+	$(Q)$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
+		    -f board/$(OOCD_BOARD).cfg \
+		    -c "init" -c "reset init" \
+		    -c "flash write_image erase $(*).hex" \
+		    -c "reset" \
+		    -c "shutdown" $(NULL)
 
 %.jlink-flash: %.bin
 	@printf " Flashing $< via JLink to $(DEVICE)\n"
