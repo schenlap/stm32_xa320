@@ -30,6 +30,7 @@ int xa320_setup_datarefs_connect(void);
 void servo_display_setup(void);
 
 static uint32_t cnt = 0;
+uint8_t config_panel = 0;
 static uint32_t xplane_ready = 0;
 static uint8_t is_init = 0;
 
@@ -65,6 +66,7 @@ void task_xplane_detect(void) {
 	if (!usb_ready)
 		return;
 	gpio_set_led(LED6, 0);
+	gpio_set_led(LED_ORANGE, 1);
 
 	if (!xplane_ready) {
 		xa320_setup_datarefs_connect(); // fill buffer
@@ -78,6 +80,7 @@ void task_xplane_detect(void) {
 			return;
 	}
 	gpio_set_led(LED5, 1);
+	gpio_set_led(LED_RED, 1);
 
 	if (!is_init) {
 		uint32_t timeout;
@@ -85,8 +88,13 @@ void task_xplane_detect(void) {
 		timeout = systime_get() + 100;
 		while(systime_get() < timeout)
 			;
-		panel_rmp_setup_datarefs();
-		panel_fis_setup_datarefs();
+		if (config_panel) {
+			panel_rmp_setup_datarefs();
+			gpio_set_led(LED_GREEN, 1);
+		} else {
+			panel_fis_setup_datarefs();
+			gpio_set_led(LED_BLUE, 1);
+		}
 		is_init = 1;
 	}
 
@@ -123,13 +131,18 @@ int main(void)
 
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOG);
+	rcc_periph_clock_enable(RCC_GPIOD);
 	rcc_periph_clock_enable(RCC_OTGFS);
 
 	systime_setup();
 
 	gpio_setup();
 
-	max7219_setup(2);
+	config_panel = gpio_get_state_direct(SWITCH_CONFIG_PANEL);
+
+	if (config_panel) {
+		max7219_setup(2);
+	}
 
 	encoder_setup();
 
@@ -137,20 +150,28 @@ int main(void)
 
 	gpio_set_led(LED6, 0);
 
-	max6956_setup();
 
-	panel_rmp_setup();
+	if (config_panel) {
+		max6956_setup();
+		panel_rmp_setup();
+	} else {
+		gpio_set_led(LED_GREEN, 0);
+		gpio_set_led(LED_ORANGE, 0);
+		panel_fis_setup();
+		servo_setup();
+		gpio_set_led(LED_RED, 0);
+		servo_display_setup();
+		gpio_set_led(LED_BLUE, 0);
+	}
 
-	servo_setup();
-
-	servo_display_setup();
-
-	//task_create(task_encoder, 2);
 	task_create(task_xplane_detect, 50);
-	task_create(task_panel_rmp, 10);
-	task_create(task_panel_fis, 10);
-	task_create(task_display, 100);
-	task_create(task_switches, 100);
+	if (config_panel) {
+		task_create(task_panel_rmp, 10);
+		task_create(task_display, 100);
+		task_create(task_switches, 100);
+	} else {
+		task_create(task_panel_fis, 10);
+	}
 	task_create(gpio_task, 50);
 
 	while (1) {

@@ -42,7 +42,8 @@ gpio_t pin_ins[] = {
 	{SWITCH_VHF1, GPIOE, GPIO2,  GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW},
 	{SWITCH_VHF2, GPIOE, GPIO4,  GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW},
 	{SWITCH_VHF3, GPIOA, GPIO2,  GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW},
-	{SWITCH_RMP_OFF, GPIOC, GPIO12, GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW}
+	{SWITCH_RMP_OFF, GPIOC, GPIO12, GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW},
+	{SWITCH_CONFIG_PANEL, GPIOC, GPIO6, GPIO_PUPD_PULLUP, ACTIVE_HIGH, DEBOUNCE_NO} // 1..PANEL_RMP, 0..PANEL_FIS
 };
 
 #else
@@ -67,14 +68,25 @@ gpio_t pin_ins[] = {
 gpio_priv_t pin_ins_priv[PIN_IN_CNT];
 
 void gpio_set_led(uint32_t pin, uint32_t state) {
-	if (!state)
-		gpio_set(LED5_PORT, pin);
+	uint32_t port;
+	if (pin == LED5 || pin == LED6)
+		port = LED5_PORT;
 	else
-		gpio_clear(LED5_PORT, pin);
+		port = LED_GREEN_PORT;
+
+	if (!state)
+		gpio_set(port, pin);
+	else
+		gpio_clear(port, pin);
 }
 
 void gpio_toggle_led(uint32_t pin) {
-	gpio_toggle(LED5_PORT, pin);
+	uint32_t port;
+	if (pin == LED5 || pin == LED6)
+		port = LED5_PORT;
+	else
+		port = LED_GREEN_PORT;
+	gpio_toggle(port, pin);
 }
 
 int gpio_get_switch() {
@@ -86,6 +98,14 @@ uint8_t gpio_get_state(uint16_t nr) {
 		return 0;
 
 	return pin_ins_priv[nr].state;
+}
+
+uint8_t gpio_get_state_direct(uint16_t nr) {
+	if (nr >= PIN_IN_CNT)
+		return 0;
+
+	gpio_t *d = &pin_ins[nr];
+	return d->lowactive == ACTIVE_LOW ? !gpio_get(d->port, d->pin) : gpio_get(d->port, d->pin);
 }
 
 uint8_t gpio_get_pos_event(uint16_t nr) {
@@ -161,11 +181,14 @@ void gpio_setup(void)
 		pin_ins_priv[i].dat = &d[i];
 	}
 
+	rcc_periph_clock_enable(RCC_GPIOC); // Leds
 	rcc_periph_clock_enable(RCC_GPIOD); // Leds
-	//rcc_periph_clock_enable(RCC_GPIOA); // Taster
 
 	gpio_mode_setup(LED6_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
 			LED5_PIN | LED6_PIN);
+	/* stm32eval */
+	gpio_mode_setup(LED_GREEN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
+			LED_GREEN_PIN | LED_ORANGE_PIN | LED_BLUE_PIN | LED_RED_PIN);
 
 
 	//gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_NONE,
