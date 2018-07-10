@@ -14,3 +14,14 @@
 
 # Logs
 *.log
+Utilities/
+XA320_hid.elf.launch
+src/test.c
+Debug
+src/startup_stm32f40xx.s
+src/stm32f4xx_conf.h
+src/stm32f4xx_it.c
+src/stm32f4xx_it.h
+src/system_stm32f4xx.c
+stm32f4_flash.ld
+.settings/
