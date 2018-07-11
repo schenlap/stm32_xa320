@@ -28,17 +28,17 @@
 uint32_t servo_display_get_nonlinear(servo_display_nonlinear_t *nl, int32_t sim_value);
 
 uint32_t servo_display_get_nonlinear(servo_display_nonlinear_t *nl, int32_t sim_value) {
-	uint32_t output;
+	int32_t output;
 
 	/* check bounds */
 	if (sim_value > nl[nl[0].sim].sim)
-		return 99;
+		sim_value = nl[nl[0].sim].sim;
 	if (sim_value < nl[1].sim)
-		return 98;
+		sim_value = nl[1].sim;
 
-	for (int i = 0; i <= (nl[0].sim) - 1; i++) { // last row not used
+	for (int i = 1; i <= (nl[0].sim) - 1; i++) { // last row not used, first is size
 		if ((sim_value >= nl[i].sim) && (sim_value < nl[i+1].sim)) { // entry found
-			output = (sim_value - nl[i].sim) * (nl[i + 1].pwm - nl[i].pwm) / (nl[i + 1].sim - nl[i].sim) + nl[i].sim; // we don't know offset here
+			output = (sim_value - nl[i].sim) * (nl[i + 1].pwm - nl[i].pwm) / (nl[i + 1].sim - nl[i].sim) + nl[i].pwm; // we don't know offset here
 			return output;
 		}
 	}

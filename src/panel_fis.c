@@ -15,8 +15,8 @@
 #include "max7219.h" // for SERVO_DEBUG
 #include "panel_fis.h"
 
-#define SERVO_DEBUG 1
-//#undef SERVO_DEBUG
+//#define SERVO_DEBUG 1
+#undef SERVO_DEBUG
 
 extern uint8_t config_panel;
 
@@ -25,11 +25,21 @@ void panel_fis_switch_cb(uint8_t id, uint32_t data);
 /* nonlinear functions */
 servo_display_nonlinear_t fis_nl_altimeter[] = {
 	{4, 4}, // array length
+	{2850, 0},
+	{2350, 100},
+	{1330, 500},
+	{800, 1800},
+	{750, 5000} // 5000 will not be reached
+};
+
+servo_display_nonlinear_t fis_nl_linear[] = { // for testing only
+	{4, 4}, // array length
 	{0, 0},
 	{100, 100},
 	{500, 500},
 	{5000, 5000} // 5000 will not be reached
 };
+
 #define ID_BATTERY_POWER 4
 servo_display_defs servo_defs[] = {
 	{SERVO_ALT, SERVO_MIN, SERVO_MAX, -1, fis_nl_altimeter, 0, 5000, 1, TEENSY_INT, ID_AUTOP_ALT, "sim/cockpit/autopilot/altitude", &panel_fis_cb},
@@ -40,6 +50,11 @@ servo_display_defs servo_defs[] = {
 
 
 void task_panel_fis(void) {
+	static uint32_t del;
+	if (del++ > 100) {
+		del = 0;
+		gpio_toggle_led(LED_BLUE);
+	}
 #if defined SERVO_DEBUG
 	static uint32_t servo_debug_data_us = SERVO_MIN;
 	char str[8 * 2 + 1];
@@ -63,7 +78,6 @@ void task_panel_fis(void) {
 
 	snprintf(str, 9, "%5d US", (int)servo_debug_data_us);
 	max7219_display_string(8, str);
-
 #endif
 }
 

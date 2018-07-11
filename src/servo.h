@@ -35,12 +35,12 @@
 /**
  * Max. pos. at 2050 us (2.00ms).
  */
-#define SERVO_MAX		(2050)
+#define SERVO_MAX		(2900)
 
 /**
  * Min. pos. at 950  us (0.95ms).
  */
-#define SERVO_MIN		(950)
+#define SERVO_MIN		(750)
 
 /**
  * Middle pos. at 1580 us (1.58ms).
