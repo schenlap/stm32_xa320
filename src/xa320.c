@@ -132,6 +132,7 @@ int main(void)
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOG);
 	rcc_periph_clock_enable(RCC_GPIOD);
+	rcc_periph_clock_enable(RCC_GPIOE);
 	rcc_periph_clock_enable(RCC_OTGFS);
 
 	systime_setup();

@@ -22,11 +22,22 @@ Building the code
 cd src
 make
 
+Configure Debugger
+----------------
+set stlink v2-1 in [find interface/stlink-v2-1.cfg]
+in file /usr/share/openocd/scripts/board/stm32f4discovery.cfg
+
+Flash
+----------------
+make flash (with jlink)
+make stflash with st-link
+
 Debug
 -----
 cd src
 ../tools/debug_kdbg
-
+or
+make attach
 
 Usage
 -----

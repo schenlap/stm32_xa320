@@ -52,9 +52,19 @@
  *
  * Changing this also requires to change settings in {@link servo_setup}!
  */
-#define SERVO_ALT       0
-#define SERVO_VARIO     1
-#define SERVO_CNT       2
+#define SERVO_SPEED     0 // PWM01
+#define SERVO_ALT       1 // PWM02
+#define SERVO_NAV_H     2 // PWM03
+#define SERVO_NAV_V     3 // PWM04
+#define SERVO_COMP      4 // PWM05
+#define SERVO_VARIO     5 // PWM06
+#define SERVO_NAV2      6 // PWM07
+#define SERVO_PWM08     7
+#define SERVO_PWM09     8
+#define SERVO_PWM10     9
+#define SERVO_PWM11     10
+#define SERVO_PWM12     11
+#define SERVO_CNT       12
 
 /**
  * Initialize and start the PWM used for the servos, drive servos to middle position.

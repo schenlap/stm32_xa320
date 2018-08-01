@@ -48,6 +48,21 @@
 #define SWITCH_VHF3     12
 #define SWITCH_RMP_OFF  13
 #define SWITCH_CONFIG_PANEL    14 // 1 .. PANEL_RMP, 0 .. PANEL_FIS
+#define SWITCH_LGEN     15
+#define SWITCH_BATT     16
+#define SWITCH_RGEN     17
+#define SWITCH_LAND     18
+#define SWITCH_BCN      19
+#define SWITCH_TAXI     20
+#define SWITCH_IGNL_S   21
+#define SWITCH_IGNL_N   22
+#define SWITCH_PWR      23
+#define SWITCH_IGNR_S   24
+#define SWITCH_IGNR_N   25
+#define SWITCH_LNAV      26
+#define SWITCH_STROBE   27
+#define SWITCH_PAX_SAFE 28
+#define SWITCH_PAX_OFF  29
 
 
 void gpio_setup(void);

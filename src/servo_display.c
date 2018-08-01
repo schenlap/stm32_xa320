@@ -73,7 +73,7 @@ void servo_display_value(uint16_t id, int32_t data, servo_display_defs *s) {
 
 void servo_display_setup(void)
 {
-	servo_set_position(SERVO_ALT, SERVO_MIN);
-	servo_set_position(SERVO_VARIO, SERVO_NULL);
+	//servo_set_position(SERVO_ALT, SERVO_MIN);
+	//servo_set_position(SERVO_VARIO, SERVO_NULL);
 
 }
