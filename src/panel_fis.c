@@ -46,10 +46,10 @@ servo_display_nonlinear_t fis_nl_linear[] = { // for testing only
 
 #define ID_BATTERY_POWER 4
 servo_display_defs servo_defs[] = {
-	{SERVO_SPEED, SERVO_MAX, SERVO_MIN, 0, SERVO_LINEAR,      0, 250,       1, TEENSY_FLOAT, ID_AIRCRAFT_AIRSPEED, "*2/gauges/indicators/airspeed_kts_pilot", &panel_fis_cb},
+	{SERVO_SPEED, SERVO_MAX, SERVO_MIN,  0, SERVO_LINEAR,      0, 250,      1, TEENSY_FLOAT, ID_AIRCRAFT_AIRSPEED, "*2/gauges/indicators/airspeed_kts_pilot", &panel_fis_cb},
 	{SERVO_ALT,   SERVO_MIN, SERVO_MAX, -1, fis_nl_altimeter, 0, 5000,      1, TEENSY_INT, ID_AUTOP_ALT, "*2/gauges/indicators/altitude_ft_pilot", &panel_fis_cb},
 	{SERVO_NAV_H, 1442, 2052,            0, SERVO_LINEAR,   -25, 25,       10, TEENSY_FLOAT, ID_NAV1_HDEF_DOTS10, "*2/radios/indicators/nav1_hdef_dots_pilot", &panel_fis_cb},
-	{SERVO_NAV_V, 1442, 2070,            0, SERVO_LINEAR,   -25, 25,       10, TEENSY_FLOAT, ID_NAV1_VDEF_DOTS10, "*2/radios/indicators/nav1_vdef_dots_pilot", &panel_fis_cb},
+	{SERVO_NAV_V, 2070, 1442,            0, SERVO_LINEAR,   -25, 25,       10, TEENSY_FLOAT, ID_NAV1_VDEF_DOTS10, "*2/radios/indicators/nav1_vdef_dots_pilot", &panel_fis_cb},
 	{SERVO_COMP,  2500, 800,             0, SERVO_LINEAR,   120, 430,       1, TEENSY_FLOAT, ID_AIRCRAFT_COURSE, "*2/gauges/indicators/compass_heading_deg_mag", &panel_fis_comp_cb},
 	{SERVO_VARIO, 2200, 800,             0, SERVO_LINEAR, -1000, 1500,      1, TEENSY_FLOAT, ID_AIRCRAFT_VARIO, "*2/gauges/indicators/vvi_fpm_pilot", &panel_fis_cb},
 	{SERVO_NAV2,  1200, 1800,            0, SERVO_LINEAR,   -50, 50,       10, TEENSY_FLOAT, ID_NAV2_HDEF_DOTS10, "*2/radios/indicators/nav2_hdef_dots_pilot", &panel_fis_cb},
