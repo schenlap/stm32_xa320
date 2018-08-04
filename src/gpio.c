@@ -61,6 +61,10 @@ gpio_t pin_ins[] = {
 	{SWITCH_PAX_OFF, GPIOD, GPIO2,  GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW}, // DI6
 };
 
+gpio_t pin_outs[] = {
+	{LED_GEAR_MOVING, GPIOC, GPIO1, GPIO_PUPD_NONE, ACTIVE_HIGH, DEBOUNCE_LOW} // DI8
+};
+
 #else
 gpio_t pin_ins[] = {
 	{SWITCH_SW_STBY, GPIOE, GPIO7, GPIO_PUPD_PULLUP, ACTIVE_LOW, DEBOUNCE_LOW},
@@ -81,6 +85,16 @@ gpio_t pin_ins[] = {
 #endif
 
 gpio_priv_t pin_ins_priv[PIN_IN_CNT];
+
+void gpio_set_led_nr(uint32_t nr, uint32_t state) {
+	if (nr >= sizeof(pin_outs) / sizeof(gpio_t))
+		return;
+
+	if (state == pin_outs[nr].lowactive)
+		gpio_set(pin_outs[nr].port, pin_outs[nr].pin);
+	else
+		gpio_clear(pin_outs[nr].port, pin_outs[nr].pin);
+}
 
 void gpio_set_led(uint32_t pin, uint32_t state) {
 	uint32_t port;
@@ -194,6 +208,10 @@ void gpio_setup(void)
 		gpio_mode_setup(d[i].port, GPIO_MODE_INPUT, d[i].pupd, d[i].pin);
 
 		pin_ins_priv[i].dat = &d[i];
+	}
+
+	for (i = 0; i < sizeof(pin_outs) / sizeof(gpio_t); i++) {
+		gpio_mode_setup(pin_outs[i].port, GPIO_MODE_OUTPUT, pin_outs[i].pupd, pin_outs[i].pin);
 	}
 
 	rcc_periph_clock_enable(RCC_GPIOC); // Leds

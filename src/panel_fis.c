@@ -31,6 +31,7 @@ extern uint8_t config_panel;
 static int pwm_test = 0; /* testmode, triggers by transponder mode */
 
 void panel_fis_switch_cb(uint8_t id, uint32_t data);
+void panel_fis_led_cb(uint8_t id, uint32_t data);
 void panel_fis_comp_cb(uint8_t id, uint32_t data);
 void panel_fis_cb_servotest(uint8_t id, uint32_t data);
 
@@ -71,6 +72,10 @@ servo_display_defs servo_defs[] = {
 fis_switch_t fis_switches[] = {
 	{SWITCH_PAX_SAFE, 1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}, 
 	{SWITCH_PAX_OFF,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}
+};
+
+fis_switch_t fis_leds[] = {
+	{LED_GEAR_MOVING, 0, TEENSY_FLOAT, ID_STROBE_LIGHT, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb} 
 };
 
 void task_panel_fis(void) {
@@ -187,6 +192,22 @@ void panel_fis_comp_cb(uint8_t id, uint32_t data) {
 }
 
 
+void panel_fis_led_cb(uint8_t id, uint32_t data) {
+	for (uint32_t i = 0; i < sizeof(fis_leds)/sizeof(fis_switch_t); i++) {
+		if (fis_leds[i].ref_id == id) {
+			if (fis_leds[i].simval_type == TEENSY_FLOAT)
+				data = teensy_from_float(data);
+
+			if (fis_leds[i].send_value == 0)
+				gpio_set_led_nr(fis_leds[i].gpio, !data);
+			else
+				gpio_set_led_nr(fis_leds[i].gpio, !!data);
+		}
+		break;
+	}
+}
+
+
 void panel_fis_cb(uint8_t id, uint32_t data) {
 	if (pwm_test != 0)
 		return;
@@ -210,6 +231,10 @@ void panel_fis_setup_datarefs(void) {
 
 	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
 		teensy_register_dataref(fis_switches[i].ref_id, fis_switches[i].ref, fis_switches[i].simval_type, fis_switches[i].cb);
+	}
+	
+	for (uint32_t i = 0; i < sizeof(fis_leds)/sizeof(fis_switch_t); i++) {
+		teensy_register_dataref(fis_leds[i].ref_id, fis_leds[i].ref, fis_leds[i].simval_type, fis_leds[i].cb);
 	}
 }
 

@@ -64,8 +64,11 @@
 #define SWITCH_PAX_SAFE 28 // used for gear handle down
 #define SWITCH_PAX_OFF  29 // used fof gear hande up
 
+#define LED_GEAR_MOVING  0
+
 
 void gpio_setup(void);
+void gpio_set_led_nr(uint32_t nr, uint32_t state);
 void gpio_set_led(uint32_t pin, uint32_t state);
 void gpio_toggle_led(uint32_t pin);
 int gpio_get_switch(void);
