@@ -18,6 +18,15 @@
 //#define SERVO_DEBUG 1
 #undef SERVO_DEBUG
 
+typedef struct {
+	uint16_t gpio;
+	uint16_t send_value;
+	uint8_t simval_type;
+	uint16_t ref_id;
+	char *ref;
+	void (*cb)(uint8_t, uint32_t);
+} fis_switch_t;
+
 extern uint8_t config_panel;
 static int pwm_test = 0; /* testmode, triggers by transponder mode */
 
@@ -59,6 +68,10 @@ servo_display_defs servo_defs[] = {
 	{0,           SERVO_MIN, SERVO_MAX,  0, SERVO_LINEAR,     0, 8000,      1, TEENSY_INT, ID_TRANSPONDER_CODE, "sim/cockpit/radios/transponder_code", &panel_fis_cb_servotest}
 };
 
+fis_switch_t fis_switches[] = {
+	{SWITCH_PAX_SAFE, 1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}, 
+	{SWITCH_PAX_OFF,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}
+};
 
 void task_panel_fis(void) {
 	static uint32_t del;
@@ -70,6 +83,11 @@ void task_panel_fis(void) {
 		if (pwm > SERVO_MAX)
 			pwm = SERVO_MIN;
 
+	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
+		if (gpio_get_pos_event(fis_switches[i].gpio)) {
+			teensy_send_int(fis_switches[i].ref_id, fis_switches[i].send_value);
+		}
+	}
 //	for (int i = 0; i < SERVO_CNT; i++) {
 //		servo_set_position(i, pwm);
 //	}
@@ -188,6 +206,10 @@ void panel_fis_cb(uint8_t id, uint32_t data) {
 void panel_fis_setup_datarefs(void) {
 	for (uint32_t i = 0; i < sizeof(servo_defs)/sizeof(servo_display_defs); i++) {
 		teensy_register_dataref(servo_defs[i].ref_id, servo_defs[i].ref, servo_defs[i].simval_type, servo_defs[i].cb);
+	}
+
+	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
+		teensy_register_dataref(fis_switches[i].ref_id, fis_switches[i].ref, fis_switches[i].simval_type, fis_switches[i].cb);
 	}
 }
 

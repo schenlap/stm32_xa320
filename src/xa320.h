@@ -35,6 +35,7 @@
 #define ID_NAV2_HDEF_DOTS10 30
 #define ID_TRANSPONDER_CODE 31
 #define ID_TRANSPONDER_MODE 32
+#define ID_GEARHANDLE       33
 
 uint8_t xa320_datarefs_ready(void);
 uint8_t xa320_xplane_ready(void);
