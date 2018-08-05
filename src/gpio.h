@@ -61,8 +61,10 @@
 #define SWITCH_IGNR_N   25
 #define SWITCH_LNAV      26
 #define SWITCH_STROBE   27
-#define SWITCH_PAX_SAFE 28 // used for gear handle down
-#define SWITCH_PAX_OFF  29 // used fof gear hande up
+#define SWITCH_PAX_SAFE 28
+#define SWITCH_PAX_OFF  29
+#define SWITCH_GEAR_UP  30
+#define SWITCH_GEAR_DOWN  31
 
 #define LED_GEAR_MOVING  0
 
@@ -77,5 +79,6 @@ void gpio_task(void);
 uint8_t gpio_get_state(uint16_t nr);
 uint8_t gpio_get_state_direct(uint16_t nr);
 uint8_t gpio_get_pos_event(uint16_t nr);
+uint8_t gpio_get_any_event(uint16_t nr);
 
 #endif // GPIO_H

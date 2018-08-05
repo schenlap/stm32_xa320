@@ -36,6 +36,21 @@
 #define ID_TRANSPONDER_CODE 31
 #define ID_TRANSPONDER_MODE 32
 #define ID_GEARHANDLE       33
+#define ID_LGEN             34
+#define ID_BATT             35
+#define ID_RGEN             36
+#define ID_LAND             37
+#define ID_BCN              38
+#define ID_TAXI             39
+#define ID_IGNL_S           40
+#define ID_IGNL_N           41
+#define ID_PWR              42
+#define ID_IGNR_S           43
+#define ID_IGNR_N           44
+#define ID_LNAV             45
+#define ID_STROBE           46
+#define ID_PAX_SAFE         47
+#define ID_PAX_OFF          48
 
 uint8_t xa320_datarefs_ready(void);
 uint8_t xa320_xplane_ready(void);

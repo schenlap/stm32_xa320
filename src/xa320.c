@@ -141,9 +141,10 @@ int main(void)
 
 	config_panel = gpio_get_state_direct(SWITCH_CONFIG_PANEL);
 
-	if (config_panel) {
+	if (config_panel)
 		max7219_setup(2);
-	}
+	else // PANEL_FIS
+		max7219_setup(1);
 
 	encoder_setup();
 

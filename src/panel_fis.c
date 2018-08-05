@@ -63,15 +63,33 @@ servo_display_defs servo_defs[] = {
 	{SERVO_COMP,  2500, 800,             0, SERVO_LINEAR,   120, 430,       1, TEENSY_FLOAT, ID_AIRCRAFT_COURSE, "*2/gauges/indicators/compass_heading_deg_mag", &panel_fis_comp_cb},
 	{SERVO_VARIO, 2200, 800,             0, SERVO_LINEAR, -1000, 1500,      1, TEENSY_FLOAT, ID_AIRCRAFT_VARIO, "*2/gauges/indicators/vvi_fpm_pilot", &panel_fis_cb},
 	{SERVO_NAV2,  1200, 1800,            0, SERVO_LINEAR,   -50, 50,       10, TEENSY_FLOAT, ID_NAV2_HDEF_DOTS10, "*2/radios/indicators/nav2_hdef_dots_pilot", &panel_fis_cb},
-	{0,           0,    0,               0, SERVO_LINEAR,     0, 1,         1, TEENSY_INT, ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", &panel_fis_switch_cb},
-	{0,           0,    0,               0, SERVO_LINEAR,     0, 1,         1, TEENSY_INT, ID_BATTERY_POWER, "sim/cockpit2/electrical/battery_on", &panel_fis_switch_cb},
+//	{0,           0,    0,               0, SERVO_LINEAR,     0, 1,         1, TEENSY_INT, ID_AVIONICS_POWER, "sim/cockpit2/switches/avionics_power_on", &panel_fis_switch_cb},
+//	{0,           0,    0,               0, SERVO_LINEAR,     0, 1,         1, TEENSY_INT, ID_BATTERY_POWER, "sim/cockpit2/electrical/battery_on", &panel_fis_switch_cb},
 	{0,           SERVO_MIN, SERVO_MAX,  0, SERVO_LINEAR,     0, 10,        1, TEENSY_INT, ID_TRANSPONDER_MODE, "sim/cockpit/radios/transponder_mode", &panel_fis_cb_servotest},
 	{0,           SERVO_MIN, SERVO_MAX,  0, SERVO_LINEAR,     0, 8000,      1, TEENSY_INT, ID_TRANSPONDER_CODE, "sim/cockpit/radios/transponder_code", &panel_fis_cb_servotest}
 };
 
+/* send switch state to x-plane */
+/*   SWITCH_NR, DATA (99=IO), TYPE,   , ID_NR,      , DataRef */
+/* TODO: handle array */
 fis_switch_t fis_switches[] = {
-	{SWITCH_PAX_SAFE, 1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}, 
-	{SWITCH_PAX_OFF,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}
+	{SWITCH_LGEN,      99, TEENSY_INT, ID_LGEN,       "sim/cockpit/electrical/generator_on",       0},// array
+	{SWITCH_BATT,      99, TEENSY_INT, ID_BATT,       "sim/cockpit/electrical/battery_on",       0},
+	{SWITCH_RGEN,      99, TEENSY_INT, ID_RGEN,       "sim/cockpit/electrical/generator_on",       0},// array
+	{SWITCH_LAND,      99, TEENSY_INT, ID_LAND,       "sim/cockpit2/switches/landing_lights_on",       0},
+	{SWITCH_BCN ,      99, TEENSY_INT, ID_BCN,        "sim/cockpit2/switches/beacon_on",       0},
+	{SWITCH_TAXI,      99, TEENSY_INT, ID_TAXI,       "sim/cockpit2/switches/taxi_light_on",       0},
+//	{SWITCH_IGNL_S,    99, TEENSY_INT, ID_IGNL_S,     "sim/starters/engage_starter_2",       0}, // TODO COMMAND
+	{SWITCH_IGNL_N,    99, TEENSY_INT, ID_IGNL_N,     "sim/cockpit/engine/ignition_on",       0},
+	{SWITCH_PWR,       99, TEENSY_INT, ID_PWR,        "sim/cockpit2/switches/avionics_power_on",       0},
+//	{SWITCH_IGNR_S,    99, TEENSY_INT, ID_IGNR_S,     "sim/starters/engage_starter_1",       0}, // TODO COMMAND
+	{SWITCH_IGNR_N,    99, TEENSY_INT, ID_IGNR_N,     "sim/cockpit/engine/ignition_on",       0}, // should send 3 for both
+	{SWITCH_LNAV,      99, TEENSY_INT, ID_LNAV,       "sim/cockpit2/switches/navigation_lights_on",       0},
+	{SWITCH_STROBE,    99, TEENSY_INT, ID_STROBE,     "sim/cockpit2/switches/strobe_lights_on",       0},
+//	{SWITCH_PAX_SAFE,  99, TEENSY_INT, ID_PAX_SAFE,   "",       0},
+//	{SWITCH_PAX_OFF ,  99, TEENSY_INT, ID_PAX_OFF,    "",       0},
+	{SWITCH_GEAR_UP,    1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}, 
+	{SWITCH_GEAR_DOWN,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}
 };
 
 fis_switch_t fis_leds[] = {
@@ -88,9 +106,18 @@ void task_panel_fis(void) {
 		if (pwm > SERVO_MAX)
 			pwm = SERVO_MIN;
 
+	uint32_t send_value;
 	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
-		if (gpio_get_pos_event(fis_switches[i].gpio)) {
-			teensy_send_int(fis_switches[i].ref_id, fis_switches[i].send_value);
+		send_value = fis_switches[i].send_value;
+		if (send_value < 99) {
+			if (gpio_get_pos_event(fis_switches[i].gpio)) {
+				teensy_send_int(fis_switches[i].ref_id, send_value);
+			}
+		} else {
+			if (gpio_get_any_event(fis_switches[i].gpio)) {
+				send_value = gpio_get_state(fis_switches[i].gpio);
+				teensy_send_int(fis_switches[i].ref_id, send_value);
+			}
 		}
 	}
 //	for (int i = 0; i < SERVO_CNT; i++) {
@@ -240,11 +267,6 @@ void panel_fis_setup_datarefs(void) {
 
 
 void panel_fis_setup(void) {
-
-#if defined SERVO_DEBUG
-if (config_panel) {
-	led_set(LED_SEL, 1);
 	max7219_ClearAll();
-}
-#endif
+	max7219_display_string(0, "FIS1234");
 }
