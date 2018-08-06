@@ -258,11 +258,14 @@ void panel_fis_setup_datarefs(void) {
 
 	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
 		teensy_register_dataref(fis_switches[i].ref_id, fis_switches[i].ref, fis_switches[i].simval_type, fis_switches[i].cb);
+		if (fis_switches[i].simval_type == TEENSY_INT)
+			teensy_send_int(fis_switches[i].ref_id, gpio_get_state(fis_switches[i].gpio));
 	}
 	
 	for (uint32_t i = 0; i < sizeof(fis_leds)/sizeof(fis_switch_t); i++) {
 		teensy_register_dataref(fis_leds[i].ref_id, fis_leds[i].ref, fis_leds[i].simval_type, fis_leds[i].cb);
 	}
+
 }
 
 
