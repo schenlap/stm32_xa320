@@ -66,7 +66,10 @@
 #define SWITCH_GEAR_UP  30
 #define SWITCH_GEAR_DOWN  31
 
-#define LED_GEAR_MOVING  0
+#define LED_GEAR_DEPLOYED  0
+#define LED_NAV1_GLIDESLOP_OFF  1
+#define LED_NAV1_TO        2
+#define LED_NAV1_FROM      3
 
 
 void gpio_setup(void);

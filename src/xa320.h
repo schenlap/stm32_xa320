@@ -52,6 +52,9 @@
 #define ID_PAX_SAFE         47
 #define ID_PAX_OFF          48
 #define ID_GEAR_DEPLOY      49
+#define ID_NAV1_GLIEDSLOP_OFF 50
+#define ID_NAV1_FROMTO      51
+#define ID_NAV2_FROMTO      52
 
 uint8_t xa320_datarefs_ready(void);
 uint8_t xa320_xplane_ready(void);

@@ -96,7 +96,11 @@ fis_switch_t fis_switches[] = {
 };
 
 fis_switch_t fis_leds[] = {
-	{LED_GEAR_MOVING, 0, 0, TEENSY_FLOAT, ID_GEAR_DEPLOY, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb}
+	/* LED_GPIO       , UPDATE, INVERSE, TYPE, ID NR,      DATAREF,                               CALLBACK */  
+	{LED_GEAR_DEPLOYED,      1, 1, TEENSY_FLOAT, ID_GEAR_DEPLOY, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb},
+	{LED_NAV1_GLIDESLOP_OFF, 1, 1, TEENSY_INT, ID_NAV1_GLIEDSLOP_OFF, "sim/cockpit2/radios/indicators/nav1_flag_glideslope", panel_fis_led_cb},
+	{0,                      0, 0, TEENSY_INT, ID_NAV1_FROMTO, "sim/cockpit2/radios/indicators/nav1_flag_from_to_pilot", panel_fis_led_cb}
+//	{0,                      0, 0, TEENSY_INT, ID_NAV2_FROMTO, "sim/cockpit2/radios/indicators/nav2_flag_from_to_pilot", panel_fis_led_cb}
 };
 
 void task_panel_fis(void) {
@@ -229,17 +233,38 @@ void panel_fis_comp_cb(uint8_t id, uint32_t data) {
 
 
 void panel_fis_led_cb(uint8_t id, uint32_t data) {
+	
 	for (uint32_t i = 0; i < sizeof(fis_leds)/sizeof(fis_switch_t); i++) {
+		if (fis_leds[i].send_value_pos != 1)
+			continue;
+
 		if (fis_leds[i].ref_id == id) {
 			if (fis_leds[i].simval_type == TEENSY_FLOAT)
 				data = teensy_from_float(data);
 
-			if (fis_leds[i].send_value_pos == 0)
-				gpio_set_led_nr(fis_leds[i].gpio, !data);
-			else
+			if (fis_leds[i].send_value_neg == 0)
 				gpio_set_led_nr(fis_leds[i].gpio, !!data);
+			else
+				gpio_set_led_nr(fis_leds[i].gpio, !data);
 		}
 		break;
+	}
+
+	if (id == ID_NAV1_FROMTO) {
+		switch(data) {
+			case 1: /* TO */
+				gpio_set_led_nr(LED_NAV1_TO, 1);
+				gpio_set_led_nr(LED_NAV1_FROM, 0);
+				break;
+			case 2: /* FROM */
+				gpio_set_led_nr(LED_NAV1_TO, 0);
+				gpio_set_led_nr(LED_NAV1_FROM, 1);
+				break;
+			default: /* 0 .. flag */
+				gpio_set_led_nr(LED_NAV1_TO, 0);
+				gpio_set_led_nr(LED_NAV1_FROM, 0);
+				break;
+		}
 	}
 }
 
