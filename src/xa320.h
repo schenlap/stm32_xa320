@@ -51,6 +51,7 @@
 #define ID_STROBE           46
 #define ID_PAX_SAFE         47
 #define ID_PAX_OFF          48
+#define ID_GEAR_DEPLOY      49
 
 uint8_t xa320_datarefs_ready(void);
 uint8_t xa320_xplane_ready(void);

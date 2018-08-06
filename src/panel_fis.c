@@ -73,27 +73,27 @@ servo_display_defs servo_defs[] = {
 /*   SWITCH_NR, DATA (99=IO), TYPE,   , ID_NR,      , DataRef */
 /* TODO: handle array */
 fis_switch_t fis_switches[] = {
-	{SWITCH_LGEN,      99, TEENSY_INT, ID_LGEN,       "sim/cockpit/electrical/generator_on",       0},// array
+	{SWITCH_LGEN,      99, TEENSY_INT, ID_LGEN,       "sim/cockpit/electrical/generator_on[0]",       0},
 	{SWITCH_BATT,      99, TEENSY_INT, ID_BATT,       "sim/cockpit/electrical/battery_on",       0},
-	{SWITCH_RGEN,      99, TEENSY_INT, ID_RGEN,       "sim/cockpit/electrical/generator_on",       0},// array
+	{SWITCH_RGEN,      99, TEENSY_INT, ID_RGEN,       "sim/cockpit/electrical/generator_on[1]",       0},
 	{SWITCH_LAND,      99, TEENSY_INT, ID_LAND,       "sim/cockpit2/switches/landing_lights_on",       0},
 	{SWITCH_BCN ,      99, TEENSY_INT, ID_BCN,        "sim/cockpit2/switches/beacon_on",       0},
 	{SWITCH_TAXI,      99, TEENSY_INT, ID_TAXI,       "sim/cockpit2/switches/taxi_light_on",       0},
 //	{SWITCH_IGNL_S,    99, TEENSY_INT, ID_IGNL_S,     "sim/starters/engage_starter_2",       0}, // TODO COMMAND
-	{SWITCH_IGNL_N,    99, TEENSY_INT, ID_IGNL_N,     "sim/cockpit/engine/ignition_on",       0},
+	{SWITCH_IGNL_N,    99, TEENSY_INT, ID_IGNL_N,     "sim/cockpit/engine/ignition_on[1]",       0},
 	{SWITCH_PWR,       99, TEENSY_INT, ID_PWR,        "sim/cockpit2/switches/avionics_power_on",       0},
 //	{SWITCH_IGNR_S,    99, TEENSY_INT, ID_IGNR_S,     "sim/starters/engage_starter_1",       0}, // TODO COMMAND
-	{SWITCH_IGNR_N,    99, TEENSY_INT, ID_IGNR_N,     "sim/cockpit/engine/ignition_on",       0}, // should send 3 for both
+	{SWITCH_IGNR_N,    99, TEENSY_INT, ID_IGNR_N,     "sim/cockpit/engine/ignition_on[0]",       0}, // should send 3 for both
 	{SWITCH_LNAV,      99, TEENSY_INT, ID_LNAV,       "sim/cockpit2/switches/navigation_lights_on",       0},
 	{SWITCH_STROBE,    99, TEENSY_INT, ID_STROBE,     "sim/cockpit2/switches/strobe_lights_on",       0},
 //	{SWITCH_PAX_SAFE,  99, TEENSY_INT, ID_PAX_SAFE,   "",       0},
 //	{SWITCH_PAX_OFF ,  99, TEENSY_INT, ID_PAX_OFF,    "",       0},
-	{SWITCH_GEAR_UP,    1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}, 
-	{SWITCH_GEAR_DOWN,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit/switches/gear_handle_status", 0}
+	{SWITCH_GEAR_UP,    1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}, // 0 .. up, 1 .. down
+	{SWITCH_GEAR_DOWN,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}
 };
 
 fis_switch_t fis_leds[] = {
-	{LED_GEAR_MOVING, 0, TEENSY_FLOAT, ID_STROBE_LIGHT, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb} 
+	{LED_GEAR_MOVING, 0, TEENSY_FLOAT, ID_GEAR_DEPLOY, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb}
 };
 
 void task_panel_fis(void) {
