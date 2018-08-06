@@ -20,7 +20,8 @@
 
 typedef struct {
 	uint16_t gpio;
-	uint16_t send_value;
+	int16_t send_value_pos; // data to send on pos event: -1 for no not send
+	int16_t send_value_neg;
 	uint8_t simval_type;
 	uint16_t ref_id;
 	char *ref;
@@ -73,27 +74,29 @@ servo_display_defs servo_defs[] = {
 /*   SWITCH_NR, DATA (99=IO), TYPE,   , ID_NR,      , DataRef */
 /* TODO: handle array */
 fis_switch_t fis_switches[] = {
-	{SWITCH_LGEN,      99, TEENSY_INT, ID_LGEN,       "sim/cockpit/electrical/generator_on[0]",       0},
-	{SWITCH_BATT,      99, TEENSY_INT, ID_BATT,       "sim/cockpit/electrical/battery_on",       0},
-	{SWITCH_RGEN,      99, TEENSY_INT, ID_RGEN,       "sim/cockpit/electrical/generator_on[1]",       0},
-	{SWITCH_LAND,      99, TEENSY_INT, ID_LAND,       "sim/cockpit2/switches/landing_lights_on",       0},
-	{SWITCH_BCN ,      99, TEENSY_INT, ID_BCN,        "sim/cockpit2/switches/beacon_on",       0},
-	{SWITCH_TAXI,      99, TEENSY_INT, ID_TAXI,       "sim/cockpit2/switches/taxi_light_on",       0},
-//	{SWITCH_IGNL_S,    99, TEENSY_INT, ID_IGNL_S,     "sim/starters/engage_starter_2",       0}, // TODO COMMAND
-	{SWITCH_IGNL_N,    99, TEENSY_INT, ID_IGNL_N,     "sim/cockpit/engine/ignition_on[1]",       0},
-	{SWITCH_PWR,       99, TEENSY_INT, ID_PWR,        "sim/cockpit2/switches/avionics_power_on",       0},
-//	{SWITCH_IGNR_S,    99, TEENSY_INT, ID_IGNR_S,     "sim/starters/engage_starter_1",       0}, // TODO COMMAND
-	{SWITCH_IGNR_N,    99, TEENSY_INT, ID_IGNR_N,     "sim/cockpit/engine/ignition_on[0]",       0}, // should send 3 for both
-	{SWITCH_LNAV,      99, TEENSY_INT, ID_LNAV,       "sim/cockpit2/switches/navigation_lights_on",       0},
-	{SWITCH_STROBE,    99, TEENSY_INT, ID_STROBE,     "sim/cockpit2/switches/strobe_lights_on",       0},
-//	{SWITCH_PAX_SAFE,  99, TEENSY_INT, ID_PAX_SAFE,   "",       0},
-//	{SWITCH_PAX_OFF ,  99, TEENSY_INT, ID_PAX_OFF,    "",       0},
-	{SWITCH_GEAR_UP,    1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}, // 0 .. up, 1 .. down
-	{SWITCH_GEAR_DOWN,  0, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}
+	{SWITCH_LGEN,      1, 0, TEENSY_INT, ID_LGEN,       "sim/cockpit/electrical/generator_on[0]",       0},
+	{SWITCH_BATT,      1, 0, TEENSY_INT, ID_BATT,       "sim/cockpit/electrical/battery_on",       0},
+	{SWITCH_RGEN,      1, 0, TEENSY_INT, ID_RGEN,       "sim/cockpit/electrical/generator_on[1]",       0},
+	{SWITCH_LAND,      1, 0, TEENSY_INT, ID_LAND,       "sim/cockpit2/switches/landing_lights_on",       0},
+	{SWITCH_BCN ,      1, 0, TEENSY_INT, ID_BCN,        "sim/cockpit2/switches/beacon_on",       0},
+	{SWITCH_TAXI,      1, 0, TEENSY_INT, ID_TAXI,       "sim/cockpit2/switches/taxi_light_on",       0},
+	{SWITCH_IGNL_S,    TEENSY_CMD_BEGIN, TEENSY_CMD_END, TEENSY_CMD, ID_IGNL_S,     "sim/starters/engage_starter_2",       0},
+	{SWITCH_IGNL_N,    0, 3, TEENSY_INT, ID_IGNL_N,     "sim/cockpit/engine/ignition_on[1]",       0},
+	{SWITCH_PWR,       1, 0, TEENSY_INT, ID_PWR,        "sim/cockpit2/switches/avionics_power_on",       0},
+	{SWITCH_IGNR_S,    TEENSY_CMD_BEGIN, TEENSY_CMD_END, TEENSY_CMD, ID_IGNR_S,     "sim/starters/engage_starter_1",       0},
+	{SWITCH_IGNR_N,    0, 3, TEENSY_INT, ID_IGNR_N,     "sim/cockpit/engine/ignition_on[0]",       0}, // should send 3 for both
+	{SWITCH_LNAV,      1, 0, TEENSY_INT, ID_LNAV,       "sim/cockpit2/switches/navigation_lights_on",       0},
+	{SWITCH_STROBE,    1, 0, TEENSY_INT, ID_STROBE,     "sim/cockpit2/switches/strobe_lights_on",       0},
+//	{SWITCH_PAX_SAFE,  0, 1, TEENSY_INT, ID_PAX_SAFE,   "",       0},
+//	{SWITCH_PAX_OFF ,  0, 1, TEENSY_INT, ID_PAX_OFF,    "",       0},
+	{SWITCH_GEAR_UP,   1,-1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}, // 0 .. up, 1 .. down
+	{SWITCH_GEAR_DOWN, 0,-1, TEENSY_INT, ID_GEARHANDLE, "sim/cockpit2/controls/gear_handle_down", 0}
+	// sim/cockpit2/radios/indicators/nav1_flag_glideslope
+	// sim/cockpit2/radios/indicators/nav1_flag_from_to_pilot	int	n	enum	Nav-To-From indication, nav1, pilot, 0 is flag, 1 is to, 2 is from.
 };
 
 fis_switch_t fis_leds[] = {
-	{LED_GEAR_MOVING, 0, TEENSY_FLOAT, ID_GEAR_DEPLOY, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb}
+	{LED_GEAR_MOVING, 0, 0, TEENSY_FLOAT, ID_GEAR_DEPLOY, "sim/flightmodel2/gear/deploy_ratio", panel_fis_led_cb}
 };
 
 void task_panel_fis(void) {
@@ -105,26 +108,32 @@ void task_panel_fis(void) {
 		pwm += 100;
 		if (pwm > SERVO_MAX)
 			pwm = SERVO_MIN;
+	}
 
-	uint32_t send_value;
+	int16_t send_value_pos;
+	int16_t send_value_neg;
+	uint32_t gpio;
+
 	for (uint32_t i = 0; i < sizeof(fis_switches)/sizeof(fis_switch_t); i++) {
-		send_value = fis_switches[i].send_value;
-		if (send_value < 99) {
-			if (gpio_get_pos_event(fis_switches[i].gpio)) {
-				teensy_send_int(fis_switches[i].ref_id, send_value);
+		send_value_pos = fis_switches[i].send_value_pos;
+		send_value_neg = fis_switches[i].send_value_neg;
+		gpio = gpio_get_state(fis_switches[i].gpio);
+
+		if (fis_switches[i].simval_type == TEENSY_INT) {
+			if (gpio && send_value_pos != -1) {
+				teensy_send_int(fis_switches[i].ref_id, send_value_pos);
+			} else if ((!gpio) && send_value_neg != -1) {
+				teensy_send_int(fis_switches[i].ref_id, send_value_neg);
 			}
-		} else {
-			if (gpio_get_any_event(fis_switches[i].gpio)) {
-				send_value = gpio_get_state(fis_switches[i].gpio);
-				teensy_send_int(fis_switches[i].ref_id, send_value);
+		} else if (fis_switches[i].simval_type == TEENSY_CMD) {
+			if (gpio && send_value_pos != -1) {
+				teensy_send_command(fis_switches[i].ref_id, send_value_pos);
+			} else if ((!gpio) && send_value_neg != -1) {
+				teensy_send_command(fis_switches[i].ref_id, send_value_neg);
 			}
 		}
 	}
-//	for (int i = 0; i < SERVO_CNT; i++) {
-//		servo_set_position(i, pwm);
-//	}
 
-	}
 #if defined SERVO_DEBUG
 	static uint32_t servo_debug_data_us = SERVO_MIN;
 	char str[8 * 2 + 1];
@@ -225,7 +234,7 @@ void panel_fis_led_cb(uint8_t id, uint32_t data) {
 			if (fis_leds[i].simval_type == TEENSY_FLOAT)
 				data = teensy_from_float(data);
 
-			if (fis_leds[i].send_value == 0)
+			if (fis_leds[i].send_value_pos == 0)
 				gpio_set_led_nr(fis_leds[i].gpio, !data);
 			else
 				gpio_set_led_nr(fis_leds[i].gpio, !!data);

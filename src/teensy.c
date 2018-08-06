@@ -6,7 +6,7 @@
 #include "usb.h"
 #include "teensy.h"
 
-#define MAX_IDS    50
+#define MAX_IDS    60
 
 struct teensy_dat_t {
 	void (*cb)(uint8_t, uint32_t);
@@ -75,12 +75,12 @@ int teensy_send_int(uint16_t id, uint32_t d) {
 	return ret;
 }
 
-void teensy_send_command_once(uint16_t id) {
+void teensy_send_command(uint16_t id, uint8_t cmd_type) {
 	if (!usb_ready)
 		return;
 
 	buf[0] = 4;
-	buf[1] = 0x06;        // Command once
+	buf[1] = cmd_type;
 	buf[2] = (uint8_t)(id & 0xFF);
 	buf[3] = (uint8_t)(id >> 8);
 	buf[4] = 0; // len of next command

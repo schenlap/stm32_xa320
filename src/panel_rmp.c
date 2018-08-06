@@ -575,10 +575,10 @@ void panel_send_dial_commands(uint32_t large_up, uint32_t large_down, uint32_t s
 	int16_t enc_low = encoder_read(ENC_A, 0);
 
 	if (enc_high)
-		teensy_send_command_once(enc_high > 0 ? large_up : large_down);
+		teensy_send_command(enc_high > 0 ? large_up : large_down, TEENSY_CMD_ONCE);
 	
 	if (enc_low)
-		teensy_send_command_once(enc_low > 0 ? small_up : small_down);
+		teensy_send_command(enc_low > 0 ? small_up : small_down, TEENSY_CMD_ONCE);
 }
 
 void panel_rmp_ndb(void) {
